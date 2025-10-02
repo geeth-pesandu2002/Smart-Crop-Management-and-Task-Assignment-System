@@ -23,7 +23,8 @@ const usersRouter      = require('./routes/users.js');
 const groupsRouter     = require('./routes/groups.js');
 const plotsRouter      = require('./routes/plots.js');
 const resourcesRouter  = require('./routes/resources.js');
-const leavesRouter     = require('./routes/leaves.js');   // ⬅️
+const leavesRouter     = require('./routes/leaves.js'); 
+const issuesRouter = require('./routes/issues.js');  // ⬅️
 
 console.log('auth   router typeof:',   typeof authRouter);
 console.log('tasks  router typeof:',   typeof tasksRouter);
@@ -45,7 +46,8 @@ app.use('/api/users',     usersRouter);
 app.use('/api/groups',    groupsRouter);
 app.use('/api/plots',     plotsRouter);
 app.use('/api/resources', resourcesRouter);
-app.use('/api/leaves',    leavesRouter);                   // ⬅️
+app.use('/api/leaves',    leavesRouter);
+app.use('/api/issues', issuesRouter);                   // ⬅️
 
 console.log('Booting server...');
 console.log('PORT:', PORT);
