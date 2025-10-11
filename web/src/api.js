@@ -49,4 +49,17 @@ export const getResourceMetrics   = (yearOrParams) => {
   return api.get("/resources/metrics/summary", { params }).then(r => r.data);
 };
 
+/* ---------------- REPORTS (NEW) ---------------- */
+// Summary used by the Reports page's table
+export const getResourcesReportSummary = (params = {}) =>
+  api.get("/reports/resources/summary", { params }).then(r => r.data);
+
+// Build absolute URLs for CSV/PDF downloads against the same API origin
+export const buildApiDownloadUrl = (path, params = {}) => {
+  const base = (api?.defaults?.baseURL || "").replace(/\/$/, "");
+  const qs = new URLSearchParams(params).toString();
+  // If baseURL is absolute (recommended), this yields e.g. http://localhost:4000/api/reports/....
+  return `${base}${path}${qs ? `?${qs}` : ""}`;
+};
+
 export default api;

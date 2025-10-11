@@ -1,5 +1,6 @@
+// backend/auth.js
 const jwt = require('jsonwebtoken');
-const User = require('./models/User');
+const User = require('./models/user');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
 if (!process.env.JWT_SECRET) {
@@ -8,16 +9,12 @@ if (!process.env.JWT_SECRET) {
 
 /**
  * Role-aware auth middleware.
- * - Verifies Bearer token.
- * - Loads fresh user from DB and attaches a SAFE object to req.user.
- * - If roles array provided, enforces role membership.
  */
 module.exports.auth = (roles = []) => async (req, res, next) => {
   try {
     const hdr = String(req.headers.authorization || '');
     const parts = hdr.split(' ');
     const token = parts.length === 2 && /^Bearer$/i.test(parts[0]) ? parts[1] : '';
-
     if (!token) return res.status(401).json({ error: 'unauthorized' });
 
     let payload;
@@ -34,8 +31,10 @@ module.exports.auth = (roles = []) => async (req, res, next) => {
       return res.status(403).json({ error: 'forbidden' });
     }
 
+    // Expose BOTH _id and id (string) so older code keeps working
     req.user = {
       _id: u._id,
+      id: String(u._id),
       name: u.name,
       email: u.email,
       userId: u.userId,
@@ -47,9 +46,9 @@ module.exports.auth = (roles = []) => async (req, res, next) => {
       mustChangePassword: !!u.mustChangePassword,
     };
 
-    return next();
+    next();
   } catch (e) {
     console.error('[auth] middleware error:', e);
-    return res.status(401).json({ error: 'unauthorized' });
+    res.status(401).json({ error: 'unauthorized' });
   }
 };

@@ -1,8 +1,9 @@
-// routes/auth.js
+// backend/routes/auth.js
 const router = require('express').Router();
+const path = require('path');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const User = require('../models/User');
+const User = require(path.join(__dirname, '..', 'models', 'User')); // case-safe
 const { auth } = require('../auth');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
@@ -10,7 +11,7 @@ if (!process.env.JWT_SECRET) {
   console.warn('[auth] WARNING: JWT_SECRET not set. Using a dev fallback secret.');
 }
 
-// ---- DEV register (keep as-is or remove in prod) ----
+/* ---------------- DEV register (optional) ---------------- */
 router.post('/register', async (req, res) => {
   try {
     const { name, email, password, role } = req.body || {};
@@ -22,7 +23,7 @@ router.post('/register', async (req, res) => {
       name,
       email: String(email).trim().toLowerCase(),
       passwordHash,
-      role
+      role,
     });
     res.json({ id: u._id });
   } catch (e) {
@@ -31,22 +32,19 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// ---- LOGIN ----
-// Managers: email + password
-// Staff/Supervisors: userId + password (email also works if present)
+/* ---------------- LOGIN (email OR userId + password) ---------------- */
 router.post('/login', async (req, res) => {
   try {
     const emailNorm = String(req.body?.email || '').trim().toLowerCase();
     const userId    = String(req.body?.userId || '').trim();
     const password  = String(req.body?.password || '');
-
     if (!password) return res.status(400).json({ error: 'password required' });
 
     let u = null;
     if (emailNorm) u = await User.findOne({ email: emailNorm });
     if (!u && userId) u = await User.findOne({ userId });
-
     if (!u) return res.status(401).json({ error: 'invalid credentials' });
+    if (u.status !== 'active') return res.status(403).json({ error: 'inactive user' });
 
     const ok = await bcrypt.compare(password, u.passwordHash || '');
     if (!ok) return res.status(401).json({ error: 'invalid credentials' });
@@ -70,24 +68,73 @@ router.post('/login', async (req, res) => {
       mustChangePassword: !!u.mustChangePassword,
     };
 
-    // Keep legacy shape: role/name/id at top level
-    return res.json({ token, role: u.role, name: u.name, id: u._id, user: safeUser });
+    res.json({ token, role: u.role, name: u.name, id: u._id, user: safeUser });
   } catch (e) {
     console.error('LOGIN ERROR', e);
     res.status(500).json({ error: 'server error' });
   }
 });
 
-// ---- ME (verify token, return fresh user) ----
+/* ---------------- LOGIN for mobile (userId/email + PIN) ----------------
+   Accept ALIASES so the app can post to any of these:
+   - /login-staff
+   - /staff-login
+   - /mobile-login
+----------------------------------------------------------------------- */
+const staffLoginPaths = ['/login-staff', '/staff-login', '/mobile-login'];
+router.post(staffLoginPaths, async (req, res) => {
+  try {
+    const userId = String(req.body?.userId || '').trim();
+    const email  = String(req.body?.email || '').trim().toLowerCase();
+    const pin    = String(req.body?.pin || '');
+
+    if ((!userId && !email) || !pin) {
+      return res.status(400).json({ error: 'userId/email & pin required' });
+    }
+
+    let u = null;
+    if (userId) u = await User.findOne({ userId });
+    if (!u && email) u = await User.findOne({ email });
+    if (!u) return res.status(401).json({ error: 'invalid credentials' });
+    if (u.status !== 'active') return res.status(403).json({ error: 'inactive user' });
+
+    const ok = await bcrypt.compare(pin, u.pinHash || '');
+    if (!ok) return res.status(401).json({ error: 'invalid credentials' });
+
+    const token = jwt.sign(
+      { id: u._id, role: u.role, name: u.name, userId: u.userId, email: u.email },
+      JWT_SECRET,
+      { expiresIn: '30d' }
+    );
+
+    const safeUser = {
+      _id: u._id,
+      name: u.name,
+      userId: u.userId,
+      email: u.email,
+      role: u.role,
+      phone: u.phone || '',
+      status: u.status || 'active',
+      mustChangePassword: !!u.mustChangePassword,
+    };
+
+    res.json({ token, role: u.role, name: u.name, id: u._id, user: safeUser });
+  } catch (e) {
+    console.error('LOGIN STAFF ERROR', e);
+    res.status(500).json({ error: 'server error' });
+  }
+});
+
+/* ---------------- ME ---------------- */
 router.get('/me', auth(), async (req, res) => {
   try {
-    res.json(req.user); // attached by auth middleware
-  } catch (e) {
+    res.json(req.user);
+  } catch {
     res.status(500).json({ error: 'failed to fetch me' });
   }
 });
 
-// ---- CHANGE PASSWORD ----
+/* ---------------- CHANGE PASSWORD ---------------- */
 router.post('/change-password', auth(), async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body || {};

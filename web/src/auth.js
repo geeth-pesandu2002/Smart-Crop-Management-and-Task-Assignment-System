@@ -8,6 +8,9 @@ export function setAuth(payload) {
   localStorage.setItem(KEY, JSON.stringify(payload || {}));
 }
 
+/** Alias for older code that imports `saveAuth` */
+export { setAuth as saveAuth };   // <-- add this line
+
 /** Read auth safely */
 export function getAuth() {
   try { return JSON.parse(localStorage.getItem(KEY) || "{}"); }
@@ -28,37 +31,26 @@ export function isAuthed() {
 /** Extract role from any saved shape */
 export function getStoredRole() {
   const a = getAuth();
-  // Support both legacy and new shapes
-  // legacy: { token, role, name, id }
-  // new:    { token, user: { role, ... } }
+  // legacy: { token, role, name, id }  |  new: { token, user: { role, ... } }
   return a?.user?.role ?? a?.role ?? null;
 }
 
-/**
- * Ensure we have a fresh user (and role) from the server.
- * - If token exists but role is missing or stale, fetch /auth/me
- * - On success, rewrite storage to new canonical shape: { token, user }
- * - On 401, clears storage
- * Returns: { ok: boolean, user?: object }
- */
+/** Heal storage using /auth/me when we have a token but role is missing/stale */
 export async function ensureMe() {
   const a = getAuth();
   if (!a?.token) return { ok: false };
 
   try {
     const { data: me } = await api.get("/auth/me");
-    // Canonicalize saved shape
     setAuth({ token: a.token, user: me });
     return { ok: true, user: me };
-  } catch (e) {
-    // Token invalid/expired → clear
+  } catch {
     clearAuth();
     return { ok: false };
   }
 }
 
-/** True if the (possibly legacy) storage indicates manager */
+/** Manager check */
 export function isManager() {
-  const role = getStoredRole();
-  return role === "manager";
+  return getStoredRole() === "manager";
 }

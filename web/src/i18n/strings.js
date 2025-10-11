@@ -150,6 +150,32 @@ const STRINGS = {
       }
     },
 
+    // --- NEW: Reports page strings ---
+    reports: {
+      title: "Resource Usage Reports",
+      month: "Month",
+      category: "Category",
+      all: "All",
+      fertilizer: "Fertilizers",
+      seeds: "Seeds",
+      pesticide: "Pesticides",
+      period: "Period",
+      ytd: "Monthly Resource Cost (YTD)",
+      dist: "Resource Category Distribution",
+      downloadCsv: "Download CSV",
+      downloadPdf: "Download PDF",
+      goDashboard: "Go to Dashboard",
+      tableHead: {
+        month: "Month",
+        resource: "Resource",
+        category: "Category",
+        qty: "Total Qty",
+        unit: "Unit"
+      },
+      loading: "Loading…",
+      noData: "No data"
+    },
+
     footer: "© 2025 Labuduwa Farmhouse",
     langToggle: "සිං / EN"
   },
@@ -223,7 +249,14 @@ const STRINGS = {
       table: {
         recent: "මෑත කාර්ය",
         hint: "සේවකයෙකු/කණ්ඩායම, බිම් කොටස හා තත්ත්වය සමඟ මෑත කාර්ය 10.",
-        head: { title: "ශීර්ෂය", assigned: "පවරා ඇත්තේ", plot: "බිම් කොටස", priority: "ප්‍රමුඛතාව", status: "තත්ත්වය", due: "නියමිත දිනය" },
+        head: {
+          title: "ශීර්ෂය",
+          assigned: "පවරා ඇත්තේ",
+          plot: "බිම් කොටස",
+          priority: "ප්‍රමුඛතාව",
+          status: "තත්ත්වය",
+          due: "නියමිත දිනය"
+        },
         groupPrefix: "කණ්ඩායම: "
       },
       f: {
@@ -310,6 +343,32 @@ const STRINGS = {
         discarded: "ප්‍රතික්ෂේපය",
         earnings: "ආදායම"
       }
+    },
+
+    // --- NEW: Reports page strings (Sinhala) ---
+    reports: {
+      title: "සම්පත් භාවිත වාර්තා",
+      month: "මාසය",
+      category: "ප්‍රවර්ගය",
+      all: "සියල්ල",
+      fertilizer: "වරගෙය",
+      seeds: "බීජ",
+      pesticide: "කෘමිනාශක",
+      period: "කාල සීමාව",
+      ytd: "මාසික වියදම් (මෙවැනි වර්ෂය)",
+      dist: "ප්‍රවර්ග වාරි බෙදාහැරීම",
+      downloadCsv: "CSV බාගත කරන්න",
+      downloadPdf: "PDF බාගත කරන්න",
+      goDashboard: "ඩෑෂ්බෝඩ් වෙත යන්න",
+      tableHead: {
+        month: "මාසය",
+        resource: "සම්පත",
+        category: "ප්‍රවර්ගය",
+        qty: "මුළු ප්‍රමාණය",
+        unit: "ඒකකය"
+      },
+      loading: "පූරණය වෙමින්…",
+      noData: "දත්ත නොමැත"
     },
 
     footer: "© 2025 Labuduwa Farmhouse",

@@ -8,7 +8,9 @@ require('dotenv').config();
 const app = express();
 
 const PORT = Number(process.env.PORT) || 4000;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/smart-farm';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/smart_farm';
+const ALLOW_MANAGER_STATUS_OVERRIDE =
+  String(process.env.ALLOW_MANAGER_STATUS_OVERRIDE || 'false') === 'true';
 
 app.use(cors());
 app.use(express.json());
@@ -17,29 +19,39 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.get('/', (_req, res) => res.send('OK'));
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
-const authRouter       = require('./routes/auth.js');
-const tasksRouter      = require('./routes/tasks.js');
-const usersRouter      = require('./routes/users.js');
-const groupsRouter     = require('./routes/groups.js');
-const plotsRouter      = require('./routes/plots.js');
-const resourcesRouter  = require('./routes/resources.js');
-const leavesRouter     = require('./routes/leaves.js'); 
-const issuesRouter = require('./routes/issues.js');  // ⬅️
+// --- Routers ---
+const authRouter      = require('./routes/auth.js');
+const tasksRouter     = require('./routes/tasks.js');
+const usersRouter     = require('./routes/users.js');
+const groupsRouter    = require('./routes/groups.js');
+const plotsRouter     = require('./routes/plots.js');
+const resourcesRouter = require('./routes/resources.js');
+const leavesRouter    = require('./routes/leaves.js');
+const issuesRouter    = require('./routes/issues.js');
+const reportsRouter   = require('./routes/reports.js');
 
-console.log('auth   router typeof:',   typeof authRouter);
-console.log('tasks  router typeof:',   typeof tasksRouter);
-console.log('users  router typeof:',   typeof usersRouter);
-console.log('groups router typeof:',   typeof groupsRouter);
-console.log('plots  router typeof:',   typeof plotsRouter);
-console.log('leaves router typeof:',   typeof leavesRouter); // ⬅️
+// Helper to assert an Express router
+function assertRouter(name, r) {
+  const ok =
+    r && typeof r === 'function' &&
+    typeof r.handle === 'function' &&
+    typeof r.use === 'function';
+  console.log(`${name.padEnd(9)} router typeof:`, typeof r, ok ? '(ok)' : '(BAD)');
+  if (!ok) throw new Error(`${name} router is not an Express router. Did you 'module.exports = router'?`);
+}
 
-if (typeof authRouter   !== 'function') throw new Error('Auth router is not a function');
-if (typeof tasksRouter  !== 'function') throw new Error('Tasks router is not a function');
-if (typeof usersRouter  !== 'function') throw new Error('Users router is not a function');
-if (typeof groupsRouter !== 'function') throw new Error('Groups router is not a function');
-if (typeof plotsRouter  !== 'function') throw new Error('Plots router is not a function');
-if (typeof leavesRouter !== 'function') throw new Error('Leaves router is not a function'); // ⬅️
+// Verify all routers early
+assertRouter('auth',      authRouter);
+assertRouter('tasks',     tasksRouter);
+assertRouter('users',     usersRouter);
+assertRouter('groups',    groupsRouter);
+assertRouter('plots',     plotsRouter);
+assertRouter('resources', resourcesRouter);
+assertRouter('leaves',    leavesRouter);
+assertRouter('issues',    issuesRouter);
+assertRouter('reports',   reportsRouter);
 
+// Mount
 app.use('/api/auth',      authRouter);
 app.use('/api/tasks',     tasksRouter);
 app.use('/api/users',     usersRouter);
@@ -47,11 +59,13 @@ app.use('/api/groups',    groupsRouter);
 app.use('/api/plots',     plotsRouter);
 app.use('/api/resources', resourcesRouter);
 app.use('/api/leaves',    leavesRouter);
-app.use('/api/issues', issuesRouter);                   // ⬅️
+app.use('/api/issues',    issuesRouter);
+app.use('/api/reports',   reportsRouter);
 
 console.log('Booting server...');
 console.log('PORT:', PORT);
 console.log('MONGO_URI:', MONGO_URI);
+console.log('ALLOW_MANAGER_STATUS_OVERRIDE:', ALLOW_MANAGER_STATUS_OVERRIDE);
 
 mongoose.connect(MONGO_URI)
   .then(() => {

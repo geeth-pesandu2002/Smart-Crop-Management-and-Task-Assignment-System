@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
-const User = require('./models/User');
+const User = require('./models/user');
 
 // Use the SAME DB as your running API
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/smart_farm';

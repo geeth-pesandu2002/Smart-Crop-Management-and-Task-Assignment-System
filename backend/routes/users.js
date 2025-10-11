@@ -1,36 +1,35 @@
 // backend/routes/users.js
+const path = require('path');
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
-const User = require('../models/User');
+// NOTE: keep model import all-lowercase to avoid Windows/Linux casing issues
+const User = require(path.join(__dirname, '..', 'models', 'user'));
 const { auth } = require('../auth');
 
 /* ---------- helpers ---------- */
 function pad(n, width = 4) { return String(n).padStart(width, '0'); }
 async function nextUserId(prefix) {
-  // Find highest sequence for this prefix (e.g., FS-0001, SV-0003)
   const rx = new RegExp(`^${prefix}-\\d{4}$`);
   const latest = await User.find({ userId: { $regex: rx } })
     .sort({ userId: -1 })
     .limit(1)
     .lean();
   const last = latest[0]?.userId?.split('-')?.[1];
-  const seq = Number(last || 0) + 1;
+  const seq  = Number(last || 0) + 1;
   return `${prefix}-${pad(seq)}`;
 }
-function randPin4() {
-  return pad(Math.floor(Math.random() * 10000), 4);
-}
+function randPin4() { return pad(Math.floor(Math.random() * 10000), 4); }
 
-/* ---------- list users (filter/search) ---------- */
+/* ---------- list users ---------- */
 router.get('/', auth(['manager']), async (req, res) => {
   try {
     const { role, status, q } = req.query;
     const filter = {};
-    if (role) filter.role = role;
+    if (role)   filter.role   = role;
     if (status) filter.status = status;
     if (q) {
-      const rx = new RegExp(q.trim(), 'i');
+      const rx = new RegExp(String(q).trim(), 'i');
       filter.$or = [{ name: rx }, { email: rx }, { phone: rx }, { userId: rx }];
     }
     const users = await User.find(filter)
@@ -48,43 +47,66 @@ router.post('/', auth(['manager']), async (req, res) => {
   try {
     const {
       name,
-      role = 'staff',
+      role:   roleRaw = 'staff',
       phone = '',
-      gender = 'other',
-      joinedAt,
+      gender: genderRaw = 'other',
+      joinedAt: joinedAtRaw,
       address = '',
       password = '',
-      email,          // optional (supervisors might have email)
-      pin             // optional custom PIN (4–6 digits)
+      email:  emailRaw,     // may be absent/blank
+      pin:    pinRaw
     } = req.body || {};
 
     if (!name) return res.status(400).json({ error: 'name required' });
-    if (!['staff', 'supervisor'].includes(role)) {
-      return res.status(400).json({ error: 'invalid role' });
+
+    // Normalize role labels from the UI (e.g. "Field Staff")
+    const roleKey = String(roleRaw).trim().toLowerCase().replace(/\s+/g, ' ');
+    const roleMap = { 'field staff': 'staff', 'field_staff': 'staff', staff: 'staff', supervisor: 'supervisor' };
+    const role = roleMap[roleKey];
+    if (!role) return res.status(400).json({ error: 'invalid role' });
+
+    // Normalize gender
+    const g = String(genderRaw).trim().toLowerCase();
+    const gender = ['male', 'female', 'other'].includes(g) ? g : 'other';
+
+    // Accept email only if non-empty, valid, and not the manager's own email
+    const creatorEmail = (req.user?.email || '').trim().toLowerCase();
+    let email;
+    if (typeof emailRaw === 'string') {
+      const e = emailRaw.trim().toLowerCase();
+      const looksLikeEmail = /\S+@\S+\.\S+/.test(e);
+      if (e && looksLikeEmail && e !== creatorEmail) email = e;
+      // else leave as undefined so it doesn't get indexed
     }
 
+    // Parse joined date
+    let joinedAt;
+    if (joinedAtRaw) {
+      const d = new Date(joinedAtRaw);
+      if (!isNaN(d.getTime())) joinedAt = d;
+    }
+
+    // IDs, passwords, PINs
     const prefix = role === 'supervisor' ? 'SV' : 'FS';
     const userId = await nextUserId(prefix);
 
-    // Password
     const tempPassword = password && password.length >= 6
       ? password
       : Math.random().toString(36).slice(-10);
     const passwordHash = await bcrypt.hash(tempPassword, 10);
 
-    // PIN (default 4 digits)
-    const chosenPin = pin && /^\d{4,6}$/.test(String(pin)) ? String(pin) : randPin4();
-    const pinHash = await bcrypt.hash(chosenPin, 10);
+    const chosenPin = pinRaw && /^\d{4,6}$/.test(String(pinRaw)) ? String(pinRaw) : randPin4();
+    const pinHash   = await bcrypt.hash(chosenPin, 10);
 
     const u = await User.create({
       userId,
-      name,
+      name: String(name).trim(),
       role,
-      phone,
+      phone: String(phone).trim(),
       gender,
-      joinedAt: joinedAt ? new Date(joinedAt) : undefined,
-      address,
-      email: email ? String(email).trim().toLowerCase() : undefined,
+      joinedAt,
+      address: String(address).trim(),
+      email,                     // undefined if blank/invalid → not indexed
       status: 'active',
       passwordHash,
       mustChangePassword: true,
@@ -92,27 +114,41 @@ router.post('/', auth(['manager']), async (req, res) => {
       pinUpdatedAt: new Date(),
     });
 
-    res.json({
-      id: u._id,
-      userId,
-      tempPassword,
-      tempPin: chosenPin,
-    });
+    res.json({ id: u._id, userId, tempPassword, tempPin: chosenPin });
   } catch (e) {
+    if (e && e.code === 11000) {
+      // Unique index violation (likely the email index)
+      const key = Object.keys(e.keyPattern || e.keyValue || {})[0] || 'field';
+      return res.status(409).json({ error: `duplicate ${key}` });
+    }
     console.error('create user failed', e);
-    res.status(400).json({ error: 'create user failed' });
+    res.status(400).json({ error: 'create user failed', details: String(e?.message || e) });
   }
 });
 
-/* ---------- update user ---------- */
+/* ---------- update / status / reset / delete ---------- */
 router.patch('/:id', auth(['manager']), async (req, res) => {
   try {
     const allowed = (({
       name, phone, role, status, gender, joinedAt, address, avatarUrl, email
     }) => ({ name, phone, role, status, gender, joinedAt, address, avatarUrl, email }))(req.body || {});
-    if (allowed.email) allowed.email = String(allowed.email).trim().toLowerCase();
-    if (allowed.joinedAt) allowed.joinedAt = new Date(allowed.joinedAt);
-
+    if (allowed.email) {
+      const e = String(allowed.email).trim().toLowerCase();
+      allowed.email = /\S+@\S+\.\S+/.test(e) ? e : undefined;
+    }
+    if (allowed.joinedAt) {
+      const d = new Date(allowed.joinedAt);
+      allowed.joinedAt = isNaN(d.getTime()) ? undefined : d;
+    }
+    if (allowed.gender) {
+      const gg = String(allowed.gender).trim().toLowerCase();
+      if (!['male', 'female', 'other'].includes(gg)) delete allowed.gender; else allowed.gender = gg;
+    }
+    if (allowed.role) {
+      const r = String(allowed.role).trim().toLowerCase().replace(/\s+/g, ' ');
+      allowed.role = r === 'field staff' ? 'staff' : r;
+      if (!['staff', 'supervisor', 'manager'].includes(allowed.role)) delete allowed.role;
+    }
     const updated = await User.findByIdAndUpdate(req.params.id, allowed, { new: true })
       .select('_id userId name email role phone status gender joinedAt address avatarUrl mustChangePassword');
     res.json(updated);
@@ -122,7 +158,6 @@ router.patch('/:id', auth(['manager']), async (req, res) => {
   }
 });
 
-/* ---------- explicit status toggle (optional) ---------- */
 router.patch('/:id/status', auth(['manager']), async (req, res) => {
   try {
     const { status } = req.body || {};
@@ -138,7 +173,6 @@ router.patch('/:id/status', auth(['manager']), async (req, res) => {
   }
 });
 
-/* ---------- reset password (returns temp once) ---------- */
 router.post('/:id/reset-password', auth(['manager']), async (req, res) => {
   try {
     const temp = Math.random().toString(36).slice(-10);
@@ -151,7 +185,6 @@ router.post('/:id/reset-password', auth(['manager']), async (req, res) => {
   }
 });
 
-/* ---------- reset PIN (returns temp once) ---------- */
 router.post('/:id/reset-pin', auth(['manager']), async (req, res) => {
   try {
     const pin = randPin4();
@@ -164,7 +197,6 @@ router.post('/:id/reset-pin', auth(['manager']), async (req, res) => {
   }
 });
 
-/* ---------- delete user ---------- */
 router.delete('/:id', auth(['manager']), async (req, res) => {
   try {
     await User.findByIdAndDelete(req.params.id);

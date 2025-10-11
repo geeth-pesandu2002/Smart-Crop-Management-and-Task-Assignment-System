@@ -1,4 +1,3 @@
-// web/src/pages/Tasks.jsx
 import { useEffect, useState, useMemo, useCallback } from "react";
 import api from "../api.js";
 import { isAuthed, isManager } from "../auth";
@@ -7,6 +6,9 @@ import { useLang } from "../i18n.jsx";
 import LanguageSwitcher from "../components/LanguageSwitcher.jsx";
 
 const LIMIT = 10;
+// Manager UI is read-only by default. You can flip via env if you ever need a one-off override.
+const CAN_OVERRIDE =
+  (import.meta?.env?.VITE_ALLOW_MANAGER_STATUS_OVERRIDE || "false") === "true";
 
 export default function Tasks() {
   const { t } = useLang();
@@ -53,6 +55,40 @@ export default function Tasks() {
     [form.title, form.assignedTo, form.groupId, mode]
   );
 
+  // Status label helper (so Sinhala strings show in the badge)
+  const statusLabel = useCallback((s) => {
+    const map = {
+      pending: t("tasks.kpi.pending"),
+      in_progress: t("tasks.kpi.in_progress"),
+      blocked: t("tasks.kpi.blocked"),
+      completed: t("tasks.kpi.completed"),
+    };
+    return map[s] || s;
+  }, [t]);
+
+  // Read-only badge for status
+  const StatusBadge = ({ status }) => {
+    const base = {
+      display: "inline-block",
+      padding: "6px 10px",
+      borderRadius: 999,
+      fontWeight: 700,
+      fontSize: 12,
+      border: "1px solid",
+    };
+    const stylesByStatus = {
+      pending:     { color: "#4b5563", backgroundColor: "#f3f4f6", borderColor: "#e5e7eb" },
+      in_progress: { color: "#1d4ed8", backgroundColor: "#eff6ff", borderColor: "#dbeafe" },
+      blocked:     { color: "#b91c1c", backgroundColor: "#fee2e2", borderColor: "#fecaca" },
+      completed:   { color: "#166534", backgroundColor: "#eaf5e2", borderColor: "#cde4cd" },
+    };
+    return (
+      <span style={{ ...base, ...(stylesByStatus[status] || stylesByStatus.pending) }}>
+        {statusLabel(status)}
+      </span>
+    );
+  };
+
   // --- load metadata (staff, groups, plots) ---
   useEffect(() => {
     (async () => {
@@ -66,7 +102,6 @@ export default function Tasks() {
         setStaff(staffData || []);
         setGroups(groupData || []);
 
-        // Normalize /plots to an array (supports {items:[]} or [])
         const plotData = plotRes?.data;
         const plotsArr = Array.isArray(plotData) ? plotData : (plotData?.items || []);
         setPlots(plotsArr);
@@ -105,6 +140,12 @@ export default function Tasks() {
   }, [buildQuery, t]);
 
   useEffect(() => { fetchTasks(); }, [fetchTasks]);
+
+  // Faster auto-refresh so mobile updates appear quickly (every 5s)
+  useEffect(() => {
+    const h = setInterval(fetchTasks, 5000);
+    return () => clearInterval(h);
+  }, [fetchTasks]);
 
   // reset to first page when filters change
   useEffect(() => { setPage(1); }, [fStatus, fPriority, fStaff, fGroup, fPlot]);
@@ -161,7 +202,6 @@ export default function Tasks() {
         sharedGroupTask: true, voiceUrl: ""
       });
       setVoiceFile(null);
-      // reload first page to see newest
       setPage(1);
       fetchTasks();
     } catch (e) {
@@ -170,11 +210,20 @@ export default function Tasks() {
     }
   };
 
-  // --- row status update (optimistic) ---
+  // --- row status update (only if override is enabled) ---
   const changeStatus = async (id, next) => {
-    setTasks(prev => prev.map(x => x._id === id ? { ...x, status: next } : x));
+    if (!CAN_OVERRIDE) return;
+    const reason = window.prompt("Please provide a short reason for this override:");
+    if (reason === null) return;
+    const trimmed = (reason || "").trim();
+    if (!trimmed) {
+      setMsg("❌ Reason is required for manager overrides");
+      return;
+    }
+
+    setTasks(prev => prev.map(x => x._id === id ? { ...x, status: next } : x)); // optimistic
     try {
-      await api.patch(`/tasks/${id}/status`, { status: next });
+      await api.patch(`/tasks/${id}/status`, { status: next, reason: trimmed });
     } catch (e) {
       console.error(e);
       setMsg("❌ Status update failed");
@@ -219,7 +268,7 @@ export default function Tasks() {
         <div>
           <h2 style={{ margin: 0, color: "#fff" }}>{t("tasks.title")}</h2>
           <p className="sub" style={{ margin: 0, color: "rgba(255,255,255,.9)" }}>
-            {t("tasks.subtitle")}
+            {CAN_OVERRIDE ? t("tasks.subtitle") : "Latest 10 tasks. Status is read-only here; updated from the mobile app."}
           </p>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -243,24 +292,8 @@ export default function Tasks() {
         </div>
       </div>
 
-      {/* KPIs */}
-      <div className="kpis">
-        <div className="kpi"><p className="t">{t("tasks.kpi.pending")}</p><p className="v">
-          {tasks.filter(tk => tk.status === "pending").length}
-        </p></div>
-        <div className="kpi"><p className="t">{t("tasks.kpi.in_progress")}</p><p className="v">
-          {tasks.filter(tk => tk.status === "in_progress").length}
-        </p></div>
-        <div className="kpi"><p className="t">{t("tasks.kpi.blocked")}</p><p className="v">
-          {tasks.filter(tk => tk.status === "blocked").length}
-        </p></div>
-        <div className="kpi"><p className="t">{t("tasks.kpi.completed")}</p><p className="v">
-          {tasks.filter(tk => tk.status === "completed").length}
-        </p></div>
-      </div>
-
       <div className="panel">
-        {/* Left: create form */}
+        {/* LEFT: Create/Assign form */}
         <div className="card">
           <h3>{t("tasks.form.create")}</h3>
           <p className="sub">{t("tasks.form.hint")}</p>
@@ -421,10 +454,14 @@ export default function Tasks() {
           )}
         </div>
 
-        {/* Right: filters + table */}
+        {/* RIGHT: Filters + Recent table */}
         <div className="card">
           <h3>{t("tasks.table.recent")}</h3>
-          <p className="sub">{t("tasks.table.hint")}</p>
+          <p className="sub">
+            {CAN_OVERRIDE
+              ? t("tasks.table.hint")
+              : "Latest 10 tasks. Status is read-only here; updated from the mobile app."}
+          </p>
 
           {/* Filters */}
           <div className="toolbar">
@@ -452,10 +489,10 @@ export default function Tasks() {
             <select className="select sm" value={fPlot} onChange={e => setFPlot(e.target.value)}>
               <option value="">{t("tasks.f.plotAll")}</option>
               {plots.map((p) => (
-  <option key={p._id} value={p._id}>
-    {p.fieldName}{p.cropType ? ` (${p.cropType})` : ""}
-  </option>
-))}
+                <option key={p._id} value={p._id}>
+                  {p.fieldName}{p.cropType ? ` (${p.cropType})` : ""}
+                </option>
+              ))}
             </select>
             <button
               className="btn ghost"
@@ -491,16 +528,21 @@ export default function Tasks() {
                     <td>{tk.plotId?.fieldName || "-"}</td>
                     <td>{tk.priority}</td>
                     <td>
-                      <select
-                        className="select sm"
-                        value={tk.status}
-                        onChange={(e) => changeStatus(tk._id, e.target.value)}
-                      >
-                        <option value="pending">{t("tasks.kpi.pending")}</option>
-                        <option value="in_progress">{t("tasks.kpi.in_progress")}</option>
-                        <option value="blocked">{t("tasks.kpi.blocked")}</option>
-                        <option value="completed">{t("tasks.kpi.completed")}</option>
-                      </select>
+                      {CAN_OVERRIDE ? (
+                        <select
+                          className="select sm"
+                          value={tk.status}
+                          onChange={(e) => changeStatus(tk._id, e.target.value)}
+                          title="Change status (override)"
+                        >
+                          <option value="pending">{t("tasks.kpi.pending")}</option>
+                          <option value="in_progress">{t("tasks.kpi.in_progress")}</option>
+                          <option value="blocked">{t("tasks.kpi.blocked")}</option>
+                          <option value="completed">{t("tasks.kpi.completed")}</option>
+                        </select>
+                      ) : (
+                        <StatusBadge status={tk.status} />
+                      )}
                     </td>
                     <td>{tk.dueDate ? new Date(tk.dueDate).toLocaleDateString() : "-"}</td>
                     <td>

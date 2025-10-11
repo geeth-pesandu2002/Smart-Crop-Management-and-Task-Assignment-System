@@ -1,5 +1,5 @@
 // web/src/pages/Resources.jsx
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import dayjs from "dayjs";
 import {
@@ -17,6 +17,13 @@ import {
 import { useLang } from "../i18n.jsx";
 import LanguageSwitcher from "../components/LanguageSwitcher.jsx";
 import { getAuth } from "../auth";
+
+// --- NEW: consistent colors per resource type ---
+const COLOR_MAP = {
+  fertilizer: "#f97316", // orange
+  seeds: "#8b5e34",      // brown
+  pesticide: "#f59e0b",  // yellow/amber
+};
 
 // Money helper
 const money = (n) => `Rs. ${Number(n || 0).toLocaleString()}`;
@@ -65,6 +72,23 @@ export default function Resources() {
   });
   const [tab, setTab] = useState("fertilizer"); // fertilizer | seeds | pesticide
 
+  // --- Real-time: Broadcast to other pages (Reports) when data changes
+  const bcRef = useRef(null);
+  useEffect(() => {
+    try {
+      bcRef.current = new BroadcastChannel("resources");
+    } catch {
+      bcRef.current = null; // older browsers / environments
+    }
+    return () => {
+      try { bcRef.current?.close(); } catch {}
+    };
+  }, []);
+  const notifyChange = () => {
+    try { bcRef.current?.postMessage({ type: "changed", at: Date.now() }); } catch {}
+    try { localStorage.setItem("resources:changed", String(Date.now())); } catch {}
+  };
+
   useEffect(() => {
     (async () => {
       try {
@@ -87,7 +111,9 @@ export default function Resources() {
     e.preventDefault();
     const payload = { ...form, type: tab };
     if (!payload.plotId) return alert(L("Please choose a Plot", "කරුණාකර බිම් කොටසක් තෝරන්න"));
+
     await createResourceUsage(payload);
+
     setForm((f) => ({
       ...f,
       quantityValue: "",
@@ -97,23 +123,29 @@ export default function Resources() {
       plantedAreaAcres: "",
       pesticideNames: "",
     }));
+
     const [metricsRes, usageRes] = await Promise.all([
       getResourceMetrics(year),
       listResourceUsages({ limit: 20 }),
     ]);
     setMetrics(metricsRes);
     setUsages(usageRes.items || []);
+
+    notifyChange();
   };
 
   const handleDelete = async (id) => {
     if (!confirm(L("Delete this record?", "මෙම වාර්තාව මකන්නද?"))) return;
     await deleteResourceUsage(id);
+
     const [metricsRes, usageRes] = await Promise.all([
       getResourceMetrics(year),
       listResourceUsages({ limit: 20 }),
     ]);
     setMetrics(metricsRes);
     setUsages(usageRes.items || []);
+
+    notifyChange();
   };
 
   // Localized chart keys
@@ -133,15 +165,24 @@ export default function Resources() {
     }));
   }, [metrics, KEY_FERT, KEY_SEED, KEY_PEST, KEY_TOTAL]);
 
+  // --- UPDATED: include original type + per-slice fill so legend & slices use our colors
   const distribution = useMemo(() => {
     if (!metrics) return [];
-    return metrics.distribution.map((d) => ({
-      name:
-        d.type === "fertilizer" ? KEY_FERT :
-        d.type === "seeds"      ? KEY_SEED : KEY_PEST,
-      value: d.cost,
-    }));
+    return metrics.distribution.map((d) => {
+      const type = d.type; // fertilizer | seeds | pesticide
+      const name =
+        type === "fertilizer" ? KEY_FERT :
+        type === "seeds"      ? KEY_SEED : KEY_PEST;
+      const fill = COLOR_MAP[type] || "#9ca3af";
+      return { name, value: d.cost, type, fill };
+    });
   }, [metrics, KEY_FERT, KEY_SEED, KEY_PEST]);
+
+  // Legend payload colored like slices
+  const legendPayload = useMemo(
+    () => distribution.map(d => ({ value: d.name, color: d.fill, type: "square", id: d.type })),
+    [distribution]
+  );
 
   if (loading) return <div style={{ padding: 24 }}>{L("Loading…", "පූරණය වෙමින්…")}</div>;
 
@@ -393,9 +434,21 @@ export default function Resources() {
           <div style={{ height: 280 }}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={distribution} dataKey="value" nameKey="name" innerRadius={60} outerRadius={100} label />
-                {distribution.map((_, i) => <Cell key={i} />)}
+                <Pie
+                  data={distribution}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius={60}
+                  outerRadius={100}
+                  label
+                >
+                  {distribution.map((slice, i) => (
+                    <Cell key={i} fill={slice.fill} />
+                  ))}
+                </Pie>
                 <Tooltip />
+                {/* Legend colored to match slices */}
+                <Legend payload={legendPayload} />
               </PieChart>
             </ResponsiveContainer>
           </div>

@@ -92,7 +92,7 @@ export default function Dashboard() {
           </div>
 
           {/* active based on current pathname */}
-          <NavLink to="/manager"   label="Dashboard"   active={location.pathname.startsWith("/manager")} />
+          <NavLink to="/manager"   label="Dashboard"     active={location.pathname.startsWith("/manager")} />
           <NavLink to="/tasks"     label="Staff & Tasks" active={location.pathname.startsWith("/tasks")} />
           <NavLink to="/plots"     label="Land & Crop"   active={location.pathname.startsWith("/plots")} />
           <NavLink to="/resources" label="Resources"     active={location.pathname.startsWith("/resources")} />

@@ -1,22 +1,16 @@
-import { http } from './http';
+// mobile/src/api/tasks.ts
+import { api } from './client';
+import type { Task } from '../db/tasks';
 
-export type ServerTask = {
-  _id: string;
-  title: string;
-  description?: string;
-  plotId?: string;
-  status: 'pending' | 'in_progress' | 'blocked' | 'completed';
-  priority?: 'low' | 'normal' | 'high';
-  updatedAt: string; // ISO
-};
+// Map local status to server status
+const toRemoteStatus = (s: Task['status']) => (s === 'done' ? 'completed' : s);
 
-export async function fetchMyTasksSince(since: number) {
-  // works even if backend ignores ?since= (we'll full fetch)
-  const { data } = await http.get<ServerTask[]>(`/tasks/mine?since=${since}`);
-  return data;
+/** PATCH /api/tasks/:id/status */
+export function updateTaskStatus(id: string, status: Task['status']) {
+  return api.patch(`/tasks/${id}/status`, { status: toRemoteStatus(status) });
 }
 
-export async function patchTaskStatus(id: string, status: ServerTask['status']) {
-  const { data } = await http.patch<ServerTask>(`/tasks/${id}/status`, { status });
-  return data;
+/** GET /api/tasks/mine?since=... (optional helper if you want to use it) */
+export function fetchMyTasksSince(sinceMs: number) {
+  return api.get(`/tasks/mine?since=${sinceMs || 0}`);
 }

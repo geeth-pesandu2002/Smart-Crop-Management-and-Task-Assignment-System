@@ -1,8 +1,8 @@
-import { http } from './http';
+// mobile/src/api/auth.ts
+import { api } from './client';
 
-export type LoginResponse = { token: string; user: any };
-
-export async function login(username: string, password: string) {
-  const { data } = await http.post<LoginResponse>('/auth/login', { username, password });
-  return data;
+export async function login(email: string, password: string) {
+  const res = await api.post('/auth/login', { email, password });
+  // expected shape: { token, user }
+  return res.data as { token: string; user: { id: string; name: string; email: string; role: string } };
 }

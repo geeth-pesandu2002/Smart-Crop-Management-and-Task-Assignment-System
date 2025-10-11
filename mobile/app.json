@@ -13,7 +13,10 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "UIBackgroundModes": ["fetch"]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -28,8 +31,7 @@
     },
     "plugins": [
       "expo-localization",
-      "expo-sqlite",
-      "expo-font"
+      "expo-sqlite"
     ]
   }
 }
