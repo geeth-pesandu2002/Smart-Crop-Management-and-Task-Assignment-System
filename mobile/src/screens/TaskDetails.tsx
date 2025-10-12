@@ -1,9 +1,10 @@
 // mobile/src/screens/TaskDetails.tsx
-import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, Pressable, Alert, ActivityIndicator, ScrollView } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { View, Text, Pressable, Alert, ActivityIndicator, ScrollView, Animated } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../app/RootNavigator';
 import { api } from '../api/client';
+import { statusToLabel, toServerStatus as toServerStatusHelper } from '../core/status';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'TaskDetails'>;
 
@@ -28,10 +29,6 @@ const S = {
   plot: 'වගා කොටස',
   due: 'නියමිත දිනය',
   unknown: '—',
-  stPending: 'ආරම්භ නොකළේ',
-  stInProgress: 'ක්‍රියාත්මකයි',
-  stBlocked: 'අවහිර විය',
-  stDone: 'සම්පුර්ණයි',
   pLow: 'අඩු',
   pNormal: 'සාමාන්‍ය',
   pHigh: 'ඉහළ',
@@ -59,25 +56,15 @@ function shortCode(id: string) {
   const n = parseInt(tail, 16) % 10000;
   return String(n).padStart(4, '0');
 }
-function siFromCode(code: DetailDTO['status']) {
-  switch (code) {
-    case 'pending': return S.stPending;
-    case 'in_progress': return S.stInProgress;
-    case 'blocked': return S.stBlocked;
-    case 'done':
-    case 'completed': return S.stDone;
-    default: return S.unknown;
-  }
-}
-const toServerStatus = (s: 'pending'|'in_progress'|'blocked'|'done') =>
-  s === 'done' ? 'completed' : s;
+const toServerStatus = toServerStatusHelper;
 
 export default function TaskDetails({ route }: Props) {
   const id = route.params?.id as string;
 
   const [task, setTask] = useState<DetailDTO | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  // track which status (if any) is currently being saved so only that button shows loading
+  const [savingStatus, setSavingStatus] = useState<string | null>(null);
 
   const prettyId = useMemo(() => shortCode(id), [id]);
 
@@ -99,17 +86,17 @@ export default function TaskDetails({ route }: Props) {
   }, [id]);
 
   async function changeStatus(next: 'pending'|'in_progress'|'blocked'|'done') {
-    if (!task || saving) return;
+    if (!task || savingStatus) return; // already saving one
     const prev = task.status;
     setTask({ ...task, status: next }); // optimistic
-    setSaving(true);
+    setSavingStatus(next);
     try {
       await api.patch(`/tasks/${id}/status`, { status: toServerStatus(next) });
     } catch (e: any) {
       setTask({ ...task, status: prev });
       Alert.alert('දෝෂය', e?.message || 'තත්ත්වය යාවත්කාලීන කිරීමට නොමැත');
     } finally {
-      setSaving(false);
+      setSavingStatus(null);
     }
   }
 
@@ -137,15 +124,35 @@ export default function TaskDetails({ route }: Props) {
 
       {/* current status */}
       <Text style={{ marginTop: 16, marginBottom: 8, opacity: 0.7 }}>
-        වර්තමාන තත්ත්වය: {siFromCode(task.status)}
+        වර්තමාන තත්ත්වය: {statusToLabel(task.status)}
       </Text>
 
       {/* Sinhala-only status buttons */}
       <View style={{ gap: 10 }}>
-        <StatusBtn text={S.stPending} onPress={() => changeStatus('pending')} disabled={saving} />
-        <StatusBtn text={S.stInProgress} onPress={() => changeStatus('in_progress')} disabled={saving} />
-        <StatusBtn text={S.stBlocked} onPress={() => changeStatus('blocked')} disabled={saving} />
-        <StatusBtn text={S.stDone} onPress={() => changeStatus('done')} disabled={saving} />
+        <StatusBtn
+          text={statusToLabel('pending')}
+          onPress={() => changeStatus('pending')}
+          loading={savingStatus === 'pending'}
+          active={task.status === 'pending'}
+        />
+        <StatusBtn
+          text={statusToLabel('in_progress')}
+          onPress={() => changeStatus('in_progress')}
+          loading={savingStatus === 'in_progress'}
+          active={task.status === 'in_progress'}
+        />
+        <StatusBtn
+          text={statusToLabel('blocked')}
+          onPress={() => changeStatus('blocked')}
+          loading={savingStatus === 'blocked'}
+          active={task.status === 'blocked'}
+        />
+        <StatusBtn
+          text={statusToLabel('done')}
+          onPress={() => changeStatus('done')}
+          loading={savingStatus === 'done'}
+          active={task.status === 'done' || task.status === 'completed'}
+        />
       </View>
     </ScrollView>
   );
@@ -160,20 +167,40 @@ function Row({ label, value }: { label: string; value: string }) {
     </View>
   );
 }
-function StatusBtn({ text, onPress, disabled }: { text: string; onPress: () => void; disabled?: boolean }) {
+function StatusBtn({ text, onPress, loading, active }: { text: string; onPress: () => void; loading?: boolean; active?: boolean }) {
+  const scale = useRef(new Animated.Value(active ? 1.03 : 1)).current;
+
+  // animate when `active` changes
+  useEffect(() => {
+    Animated.timing(scale, {
+      toValue: active ? 1.03 : 1,
+      duration: 180,
+      useNativeDriver: true,
+    }).start();
+  }, [active]);
+
   return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      style={({ pressed }) => ({
-        paddingVertical: 14,
-        borderRadius: 10,
-        alignItems: 'center',
-        backgroundColor: '#1d4ed8',
-        opacity: disabled ? 0.5 : pressed ? 0.85 : 1,
-      })}
-    >
-      <Text style={{ color: 'white', fontWeight: '700' }}>{text}</Text>
-    </Pressable>
+    <Animated.View style={{ transform: [{ scale }], borderRadius: 10, overflow: 'visible', borderWidth: active ? 2 : 0, borderColor: active ? '#065f46' : 'transparent' }}>
+      <Pressable
+        onPress={onPress}
+        disabled={!!loading}
+        style={({ pressed }) => ({
+          paddingVertical: 14,
+          borderRadius: 10,
+          alignItems: 'center',
+          backgroundColor: '#16a34a', // green to match other buttons
+          opacity: loading ? 0.6 : pressed ? 0.85 : 1,
+          flexDirection: 'row',
+          justifyContent: 'center',
+          paddingHorizontal: 12,
+        })}
+      >
+        {loading ? (
+          <ActivityIndicator color="white" style={{ marginRight: 8 }} />
+        ) : null}
+        <Text style={{ color: 'white', fontWeight: '700' }}>{text}</Text>
+      </Pressable>
+    </Animated.View>
   );
 }
+

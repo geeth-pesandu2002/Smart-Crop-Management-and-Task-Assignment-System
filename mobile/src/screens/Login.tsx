@@ -81,8 +81,9 @@ export default function Login() {
       if (user.name) setMeta('user_name', String(user.name));
       if (user.role) setMeta('user_role', String(user.role));
 
-      await pullMineFromServer();
-      nav.reset({ index: 0, routes: [{ name: 'TaskList' }] });
+  await pullMineFromServer();
+  // Reset to the tab navigator (MainTabs) so the Tasks tab is shown after login
+  nav.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
     } catch (e: any) {
       const msg =
         e?.response?.data?.error ||

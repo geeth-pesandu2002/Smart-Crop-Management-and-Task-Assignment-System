@@ -14,7 +14,10 @@ const ALLOW_MANAGER_STATUS_OVERRIDE =
 
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Ensure uploads dir exists and serve it
+const uploadsDir = path.join(__dirname, 'uploads');
+try { require('fs').mkdirSync(uploadsDir, { recursive: true }); } catch (e) {}
+app.use('/uploads', express.static(uploadsDir));
 
 app.get('/', (_req, res) => res.send('OK'));
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
@@ -29,6 +32,7 @@ const resourcesRouter = require('./routes/resources.js');
 const leavesRouter    = require('./routes/leaves.js');
 const issuesRouter    = require('./routes/issues.js');
 const reportsRouter   = require('./routes/reports.js');
+const uploadsRouter   = require('./routes/uploads.js');
 
 // Helper to assert an Express router
 function assertRouter(name, r) {
@@ -61,6 +65,7 @@ app.use('/api/resources', resourcesRouter);
 app.use('/api/leaves',    leavesRouter);
 app.use('/api/issues',    issuesRouter);
 app.use('/api/reports',   reportsRouter);
+app.use('/api/uploads',   uploadsRouter);
 
 console.log('Booting server...');
 console.log('PORT:', PORT);

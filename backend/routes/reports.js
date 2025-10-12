@@ -1,10 +1,68 @@
-// backend/routes/reports.js
 const router = require('express').Router();
+const path = require('path');
 const dayjs = require('dayjs');
 const { Parser } = require('json2csv');
 const PDFDocument = require('pdfkit');
+const Report = require(path.join(__dirname, '..', 'models', 'Report'));
 const ResourceUsage = require('../models/ResourceUsage');
+const { auth } = require('../auth');
 
+// --- Report endpoints (mobile) ---
+// Create a new report (staff)
+router.post('/', auth(), async (req, res) => {
+  try {
+    const user = req.user;
+    const { field, date, issueType, description, photoUrl, voiceUrl } = req.body || {};
+    if (!field || !date || !issueType) return res.status(400).json({ error: 'field, date and issueType required' });
+
+    const r = await Report.create({
+      userId: user._id,
+      userName: user.name,
+      field,
+      date: new Date(date),
+      issueType,
+      description,
+      photoUrl,
+      voiceUrl,
+    });
+
+    res.json({ id: r._id });
+  } catch (e) {
+    console.error('create report failed', e);
+    res.status(400).json({ error: 'create report failed' });
+  }
+});
+
+// List reports (manager only)
+router.get('/', auth(['manager']), async (req, res) => {
+  try {
+    const reports = await Report.find().sort('-createdAt').lean();
+    res.json(reports);
+  } catch (e) {
+    console.error('list reports failed', e);
+    res.status(500).json({ error: 'failed to list reports' });
+  }
+});
+
+// Get single report (manager or owner)
+router.get('/:id', auth(), async (req, res) => {
+  try {
+    const r = await Report.findById(req.params.id).lean();
+    if (!r) return res.status(404).json({ error: 'not found' });
+
+    // allow manager or owner
+    if (req.user.role !== 'manager' && String(r.userId) !== String(req.user._id)) {
+      return res.status(403).json({ error: 'forbidden' });
+    }
+
+    res.json(r);
+  } catch (e) {
+    console.error('get report failed', e);
+    res.status(400).json({ error: 'get report failed' });
+  }
+});
+
+// --- Resource usage / exports (existing logic) ---
 // --- Helpers ---
 function parseRange(q) {
   // ?month=YYYY-MM OR ?from=YYYY-MM-DD&to=YYYY-MM-DD

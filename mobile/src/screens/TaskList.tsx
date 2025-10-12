@@ -1,14 +1,14 @@
 // mobile/src/screens/TaskList.tsx
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, Pressable, RefreshControl, Alert } from 'react-native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../app/RootNavigator';
+// navigation prop is dynamically provided by the tab navigator; keep it untyped for simplicity
 import { useTasks } from '../core/hooks';
+import { statusToLabel, statusColor } from '../core/status';
 import { syncNow } from '../sync/taskSync';
 import { db } from '../db';
 import { setMeta } from '../db/meta';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'TaskList'>;
+type Props = { navigation: any };
 
 function getLastSyncLabel(): string {
   const rows = db.getAllSync<{ value: string }>(
@@ -137,14 +137,29 @@ export default function TaskList({ navigation }: Props) {
                   justifyContent: 'space-between',
                 }}
               >
-                <Text style={{ fontSize: 18 }}>{item.title}</Text>
-                {Number(item.dirty) === 1 ? (
-                  <Text style={{ fontSize: 12, color: '#d97706' }}>🔶 නොසම්මුහුර්ත</Text>
-                ) : (
-                  <Text style={{ fontSize: 12, opacity: 0.6 }}>✓ සම්මුහුර්ත</Text>
-                )}
+                <View style={{ flex: 1, marginRight: 12 }}>
+                  <Text style={{ fontSize: 18 }} numberOfLines={2} ellipsizeMode="tail">
+                    {item.title}
+                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
+                    {/* colored status dot */}
+                    <View style={{ width: 8, height: 8, borderRadius: 8, backgroundColor: statusColor(item.status), marginRight: 8 }} />
+                    <Text style={{ fontSize: 12, color: '#374151' }}>{statusToLabel(item.status)}</Text>
+                  </View>
+                </View>
+                <View style={{ flexShrink: 0, alignItems: 'flex-end' }}>
+                  {Number(item.dirty) === 1 ? (
+                    <View style={{ backgroundColor: '#f59e0b', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 }}>
+                      <Text style={{ fontSize: 12, color: 'white', fontWeight: '700' }}>නොසම්මුහුර්ත</Text>
+                    </View>
+                  ) : (
+                    <View style={{ backgroundColor: '#10b981', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 }}>
+                      <Text style={{ fontSize: 12, color: 'white', fontWeight: '700' }}>සම්මුහුර්ත</Text>
+                    </View>
+                  )}
+                </View>
               </View>
-              <Text style={{ opacity: 0.7, marginTop: 4 }}>({item.status})</Text>
+              <Text style={{ opacity: 0.7, marginTop: 4 }}>({statusToLabel(item.status)})</Text>
             </View>
           </Pressable>
         )}
