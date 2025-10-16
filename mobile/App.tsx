@@ -66,6 +66,15 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <StatusBar style="auto" />
       <RootNavigator />
+      {/* Toast container (global) */}
+      {/* Import dynamically to avoid cycle */}
+      {(() => {
+        const Toast = require('./src/components/Toast').default;
+        const { toastRef } = require('./src/components/Toast');
+        const ref = React.createRef();
+        toastRef.ref = ref;
+        return <Toast ref={ref} />;
+      })()}
     </QueryClientProvider>
   );
 }

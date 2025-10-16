@@ -11,6 +11,7 @@ import Plots from "./pages/Plots.jsx";
 import PlotEditor from "./pages/PlotEditor.jsx";
 import Resources from "./pages/Resources.jsx";
 import Reports from "./pages/Reports.jsx";
+import FieldReports from "./pages/FieldReports.jsx";
 import Settings from "./pages/Settings.jsx";
 
 // Auth helpers
@@ -84,6 +85,7 @@ export default function App() {
           <Route path="/plots/:id"   element={<Protected><PlotEditor /></Protected>} />
           <Route path="/resources"   element={<Protected><Resources /></Protected>} />
           <Route path="/reports"     element={<Protected><Reports /></Protected>} />
+          <Route path="/reports/field" element={<Protected><FieldReports /></Protected>} />
           <Route path="/settings"    element={<Protected><Settings /></Protected>} />
 
           {/* Catch-all */}

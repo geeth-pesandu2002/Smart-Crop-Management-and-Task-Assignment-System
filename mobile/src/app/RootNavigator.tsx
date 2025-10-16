@@ -11,6 +11,7 @@ import Login from '../screens/Login';
 import TaskList from '../screens/TaskList';
 import TaskDetails from '../screens/TaskDetails';
 import ReportCreate from '../screens/ReportCreate';
+import ReportList from '../screens/ReportList';
 import Profile from '../screens/Profile';
 import { getMeta, setMeta } from '../db/meta';
 import { useTranslation } from 'react-i18next';
@@ -22,6 +23,7 @@ export type RootStackParamList = {
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+const ReportsStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 function MainTabs() {
@@ -38,14 +40,20 @@ function MainTabs() {
       />
       <Tab.Screen
         name="Reports"
-        component={ReportCreate}
         options={{
           title: t('report'),
           tabBarIcon: ({ color, size }: { color: string; size: number }) => (
             <MaterialCommunityIcons name="file-document-edit-outline" size={size} color={color} />
           ),
         }}
-      />
+      >
+        {() => (
+          <ReportsStack.Navigator initialRouteName="ReportCreate" screenOptions={{ headerShown: false }}>
+            <ReportsStack.Screen name="ReportList" component={ReportList} />
+            <ReportsStack.Screen name="ReportCreate" component={ReportCreate} />
+          </ReportsStack.Navigator>
+        )}
+      </Tab.Screen>
       <Tab.Screen
         name="Profile"
         component={Profile}

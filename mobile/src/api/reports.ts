@@ -1,13 +1,14 @@
 import { api } from './client';
 
+// API_URL already includes the '/api' prefix in mobile config, so use relative paths
 export function createReport(payload: any) {
-  return api.post('/api/reports', payload);
+  return api.post('/reports', payload);
 }
 
 export function listReports() {
-  return api.get('/api/reports');
+  return api.get('/reports');
 }
 
 export function getReport(id: string) {
-  return api.get(`/api/reports/${id}`);
+  return api.get(`/reports/${id}`);
 }

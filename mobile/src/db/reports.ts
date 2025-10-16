@@ -45,3 +45,36 @@ export function listReports() {
   }
   return rows;
 }
+
+export function updateReport(id: string, updates: { photoUrl?: string | null; voiceUrl?: string | null; dirty?: number | null }) {
+  if (!id) return;
+  const setParts: string[] = [];
+  const params: any[] = [];
+  if (typeof updates.photoUrl !== 'undefined') {
+    setParts.push(`photoUrl = ?`);
+    params.push(String(updates.photoUrl || ''));
+  }
+  if (typeof updates.voiceUrl !== 'undefined') {
+    setParts.push(`voiceUrl = ?`);
+    params.push(String(updates.voiceUrl || ''));
+  }
+  if (typeof updates.dirty !== 'undefined') {
+    setParts.push(`dirty = ?`);
+    params.push(Number(updates.dirty));
+  }
+  if (setParts.length === 0) return;
+  // Build a literal SQL string similar to other helpers in this file
+  const sets = [];
+  let i = 0;
+  for (const p of setParts) {
+    // replace '?' placeholders with properly quoted params
+    const val = params[i++];
+    sets.push(`${p.replace(' = ?', '')} = '${String(val).replace(/'/g, "''")}'`);
+  }
+  const sql = `UPDATE reports SET ${sets.join(', ')} WHERE id = '${String(id).replace(/'/g, "''")}'`;
+  try {
+    db.execSync(sql);
+  } catch (e) {
+    // ignore
+  }
+}

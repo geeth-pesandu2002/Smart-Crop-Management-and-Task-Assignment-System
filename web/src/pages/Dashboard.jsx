@@ -1,6 +1,6 @@
-// src/pages/Dashboard.jsx
+
 import { useEffect, useMemo, useState } from "react";
-import { Link, Navigate, useLocation, useNavigate } from "react-router-dom"; // <-- useLocation added
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import api, { getPlots } from "../api.js";
 import { isAuthed, isManager } from "../auth";
 
@@ -15,8 +15,9 @@ function useFetch(url, initial = null) {
     let ok = true;
     (async () => {
       try {
-        const { data } = await api.get(url);
-        if (ok) setData(data);
+        const res = await api.get(url);
+        const payload = res?.data ?? res;
+        if (ok) setData(payload);
       } catch (e) {
         if (ok) setErr(e?.response?.data?.error || "fetch failed");
       } finally {
@@ -36,9 +37,43 @@ function colorFromString(s) {
   return `hsl(${hue} 60% 45%)`;
 }
 
+function NavLink({ to, label, active }) {
+  return (
+    <Link
+      to={to}
+      className={`sidebar-link${active ? ' active' : ''}`}
+      style={{
+        padding: "10px 12px",
+        borderRadius: 10,
+        background: active ? "rgba(22,163,74,.12)" : "transparent",
+        color: active ? "#166534" : "inherit",
+        fontWeight: 600,
+        textDecoration: 'none',
+        cursor: 'pointer'
+      }}
+    >
+      {label}
+    </Link>
+  );
+}
+
+function KpiCard({ title, big, sub, action, to }) {
+  const content = (
+    <div className="card kpi-card" style={{ display: "grid", gap: 6 }}>
+      <div style={{ fontWeight: 700 }}>{title}</div>
+      <div style={{ fontSize: 22, fontWeight: 800 }}>{big}</div>
+      <div className="p" style={{ margin: 0 }}>{sub}</div>
+      <div style={{ marginTop: 6 }}>
+        <span className="link">{action}</span>
+      </div>
+    </div>
+  );
+  return to ? <Link to={to}>{content}</Link> : content;
+}
+
 export default function Dashboard() {
   const navigate = useNavigate();
-  const location = useLocation(); // <-- for active sidebar state
+  const location = useLocation();
 
   const allowed = isAuthed() && isManager();
 
@@ -80,7 +115,7 @@ export default function Dashboard() {
     <>
       {!allowed && <Navigate to="/login" replace />}
 
-  <div style={{ display: "grid", gridTemplateColumns: "220px 1fr", gap: 16, height: "100vh", overflow: 'hidden' }}>
+      <div style={{ display: "grid", gridTemplateColumns: "220px 1fr", gap: 16, height: "100vh", overflow: 'hidden' }}>
         {/* Sidebar */}
         <aside style={{
           background: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.5)",
@@ -91,14 +126,13 @@ export default function Dashboard() {
             Manager
           </div>
 
-          {/* active based on current pathname */}
-          <NavLink to="/manager"   label="Dashboard"     active={location.pathname.startsWith("/manager")} />
-          <NavLink to="/tasks"     label="Staff & Tasks" active={location.pathname.startsWith("/tasks")} />
-          <NavLink to="/plots"     label="Land & Crop"   active={location.pathname.startsWith("/plots")} />
-          <NavLink to="/resources" label="Resources"     active={location.pathname.startsWith("/resources")} />
-          <NavLink to="/reports"   label="Reports"       active={location.pathname.startsWith("/reports")} />
-          <NavLink to="/reports/field"   label="Field Reports"       active={location.pathname.startsWith("/reports/field")} />
-          <NavLink to="/settings"  label="Settings"      active={location.pathname.startsWith("/settings")} />
+          <NavLink to="/manager" label="Dashboard" active={location.pathname.startsWith("/manager")} />
+          <NavLink to="/tasks" label="Staff & Tasks" active={location.pathname.startsWith("/tasks")} />
+          <NavLink to="/plots" label="Land & Crop" active={location.pathname.startsWith("/plots")} />
+          <NavLink to="/resources" label="Resources" active={location.pathname.startsWith("/resources")} />
+          <NavLink to="/reports" label="Reports" active={location.pathname.startsWith("/reports")} />
+          <NavLink to="/reports/field" label="Field Reports" active={location.pathname.startsWith("/reports/field")} />
+          <NavLink to="/settings" label="Settings" active={location.pathname.startsWith("/settings")} />
 
           <div style={{ marginTop: "auto", display: "grid", gap: 8 }}>
             <Link to="/settings" className="btn outline">Help</Link>
@@ -122,109 +156,109 @@ export default function Dashboard() {
           {/* Content (scrollable) */}
           <div style={{ flex: 1, overflow: 'auto', padding: '0 24px 24px 24px' }}>
             {/* KPI row */}
-            <section style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
-            <KpiCard title="Crop Status" big="95% Healthy" sub="Overall health of active crops" action="View Details" />
-            <KpiCard title="Soil Condition Alerts" big={`${alerts.length} Active Alerts`} sub="Immediate issues from sensors" action="View Details" />
-            <KpiCard
-              title="Task Summary"
-              big={loadTasks || !taskSum ? "…" : `${taskSum.pending} Pending`}
-              sub="Tasks needing attention and in progress"
-              action="View Details"
-              to="/tasks"
-            />
-            <KpiCard
-              title="Financial Snapshot"
-              big={`Rs. ${finance.revenue.toLocaleString()}`}
-              sub={`Revenue (Δ ${finance.delta > 0 ? "+" : ""}${finance.delta}%)`}
-              action="View Details"
-              to="/reports"
-            />
+            <section className="kpi-row" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+              <KpiCard title="Crop Status" big="95% Healthy" sub="Overall health of active crops" action="View Details" />
+              <KpiCard title="Soil Condition Alerts" big={`${alerts.length} Active Alerts`} sub="Immediate issues from sensors" action="View Details" />
+              <KpiCard
+                title="Task Summary"
+                big={loadTasks || !taskSum ? "…" : `${taskSum.pending} Pending`}
+                sub="Tasks needing attention and in progress"
+                action="View Details"
+                to="/tasks"
+              />
+              <KpiCard
+                title="Financial Snapshot"
+                big={`Rs. ${finance.revenue.toLocaleString()}`}
+                sub={`Revenue (Δ ${finance.delta > 0 ? "+" : ""}${finance.delta}%)`}
+                action="View Details"
+                to="/reports"
+              />
             </section>
 
             {/* Map */}
             <section style={{ marginTop: 22 }}>
-            <h3 style={{ margin: "8px 0 12px" }}>Interactive Farm Map</h3>
+              <h3 style={{ margin: "8px 0 12px" }}>Interactive Farm Map</h3>
 
-            <div className="card" style={{ position: "relative" }}>
-              <div style={{ height: 560, borderRadius: 12, overflow: "hidden", border: "1px solid var(--line)" }}>
-                <MapContainer
-                  center={FARM.center}
-                  zoom={16}
-                  bounds={FARM.bounds}
-                  maxBounds={FARM.bounds}
-                  maxBoundsViscosity={1.0}
-                  style={{ height: "100%", width: "100%" }}
-                >
-                  <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+              <div className="card" style={{ position: "relative" }}>
+                <div style={{ height: 560, borderRadius: 12, overflow: "hidden", border: "1px solid var(--line)" }}>
+                  <MapContainer
+                    center={FARM.center}
+                    zoom={16}
+                    bounds={FARM.bounds}
+                    maxBounds={FARM.bounds}
+                    maxBoundsViscosity={1.0}
+                    style={{ height: "100%", width: "100%" }}
+                  >
+                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
-                  {!loadingPlots && plots.map((p) => {
-                    const ring = (p.geometry?.coordinates?.[0] || []).map(([lng, lat]) => [lat, lng]);
-                    if (!ring.length) return null;
-                    const color = colorFromString(p.cropType);
-                    return (
-                      <Polygon
-                        key={p._id}
-                        positions={ring}
-                        pathOptions={{ color, weight: 2.5, fillOpacity: 0.3 }}
-                        eventHandlers={{ click: () => navigate(`/plots/${p._id}`) }}
-                      >
-                        <Tooltip sticky>
-                          <div style={{ fontWeight: 700 }}>{p.fieldName}</div>
-                          <div style={{ fontSize: 12 }}>
-                            {p.cropType || "—"} · {p.area} {p.areaUnit}
-                          </div>
-                        </Tooltip>
-                        <Popup>
-                          <div style={{ minWidth: 200 }}>
-                            <div style={{ fontWeight: 800, marginBottom: 6 }}>{p.fieldName}</div>
-                            <div><b>Crop:</b> {p.cropType || "—"}</div>
-                            <div><b>Area:</b> {p.area} {p.areaUnit}</div>
-                            <div><b>Planted:</b> {p.plantingDate ? new Date(p.plantingDate).toLocaleDateString() : "—"}</div>
-                            <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
-                              <button className="btn sm" onClick={() => navigate(`/plots/${p._id}`)}>
-                                Open plot
-                              </button>
-                              <button className="btn ghost sm" onClick={() => navigate("/plots")}>
-                                See list
-                              </button>
+                    {!loadingPlots && plots.map((p) => {
+                      const ring = (p.geometry?.coordinates?.[0] || []).map(([lng, lat]) => [lat, lng]);
+                      if (!ring.length) return null;
+                      const color = colorFromString(p.cropType);
+                      return (
+                        <Polygon
+                          key={p._id}
+                          positions={ring}
+                          pathOptions={{ color, weight: 2.5, fillOpacity: 0.3 }}
+                          eventHandlers={{ click: () => navigate(`/plots/${p._id}`) }}
+                        >
+                          <Tooltip sticky>
+                            <div style={{ fontWeight: 700 }}>{p.fieldName}</div>
+                            <div style={{ fontSize: 12 }}>
+                              {p.cropType || "—"} · {p.area} {p.areaUnit}
                             </div>
-                          </div>
-                        </Popup>
-                      </Polygon>
-                    );
-                  })}
-                </MapContainer>
-              </div>
-
-              {/* Legend */}
-              {legend.length > 0 && (
-                <div className="card" style={{
-                  position: "absolute", right: 14, top: 14,
-                  padding: 10, borderRadius: 12, width: 220
-                }}>
-                  <div style={{ fontWeight: 700, marginBottom: 6 }}>Crops</div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr auto", rowGap: 6, columnGap: 8 }}>
-                    {legend.map((l) => (
-                      <div key={l.label} style={{ display: "contents" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <span
-                            style={{
-                              display: "inline-block",
-                              width: 12, height: 12, borderRadius: 3,
-                              background: l.color, border: "1px solid rgba(0,0,0,.1)",
-                            }}
-                          />
-                          <span style={{ fontSize: 13 }}>{l.label}</span>
-                        </div>
-                        <span style={{ fontSize: 12, color: "var(--muted)" }}>
-                          {plots.filter((p) => (p.cropType || "Unknown") === l.label).length}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+                          </Tooltip>
+                          <Popup>
+                            <div style={{ minWidth: 200 }}>
+                              <div style={{ fontWeight: 800, marginBottom: 6 }}>{p.fieldName}</div>
+                              <div><b>Crop:</b> {p.cropType || "—"}</div>
+                              <div><b>Area:</b> {p.area} {p.areaUnit}</div>
+                              <div><b>Planted:</b> {p.plantingDate ? new Date(p.plantingDate).toLocaleDateString() : "—"}</div>
+                              <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
+                                <button className="btn sm" onClick={() => navigate(`/plots/${p._id}`)}>
+                                  Open plot
+                                </button>
+                                <button className="btn ghost sm" onClick={() => navigate("/plots") }>
+                                  See list
+                                </button>
+                              </div>
+                            </div>
+                          </Popup>
+                        </Polygon>
+                      );
+                    })}
+                  </MapContainer>
                 </div>
-              )}
-            </div>
+
+                {/* Legend */}
+                {legend.length > 0 && (
+                  <div className="card" style={{
+                    position: "absolute", right: 14, top: 14,
+                    padding: 10, borderRadius: 12, width: 220
+                  }}>
+                    <div style={{ fontWeight: 700, marginBottom: 6 }}>Crops</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr auto", rowGap: 6, columnGap: 8 }}>
+                      {legend.map((l) => (
+                        <div key={l.label} style={{ display: "contents" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <span
+                              style={{
+                                display: "inline-block",
+                                width: 12, height: 12, borderRadius: 3,
+                                background: l.color, border: "1px solid rgba(0,0,0,.1)",
+                              }}
+                            />
+                            <span style={{ fontSize: 13 }}>{l.label}</span>
+                          </div>
+                          <span style={{ fontSize: 12, color: "var(--muted)" }}>
+                            {plots.filter((p) => (p.cropType || "Unknown") === l.label).length}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </section>
           </div>
 
@@ -233,36 +267,4 @@ export default function Dashboard() {
       </div>
     </>
   );
-}
-
-function NavLink({ to, label, active }) {
-  return (
-    <Link
-      to={to}
-      style={{
-        padding: "10px 12px",
-        borderRadius: 10,
-        background: active ? "rgba(22,163,74,.12)" : "transparent",
-        color: active ? "#166534" : "inherit",
-        fontWeight: 600,
-        textDecoration: 'none',
-      }}
-    >
-      {label}
-    </Link>
-  );
-}
-
-function KpiCard({ title, big, sub, action, to }) {
-  const content = (
-    <div className="card" style={{ display: "grid", gap: 6 }}>
-      <div style={{ fontWeight: 700 }}>{title}</div>
-      <div style={{ fontSize: 22, fontWeight: 800 }}>{big}</div>
-      <div className="p" style={{ margin: 0 }}>{sub}</div>
-      <div style={{ marginTop: 6 }}>
-        <span className="link">{action}</span>
-      </div>
-    </div>
-  );
-  return to ? <Link to={to}>{content}</Link> : content;
 }

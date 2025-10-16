@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const reportSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  userCode: { type: String },
   userName: { type: String },
   field: { type: String, required: true },
   date: { type: Date, required: true },

@@ -17,6 +17,7 @@ router.post('/', auth(), async (req, res) => {
 
     const r = await Report.create({
       userId: user._id,
+      userCode: user.userId || '',
       userName: user.name,
       field,
       date: new Date(date),

@@ -54,8 +54,10 @@ function Toast({ item, onClose }) {
   );
 }
 
+import { useLang } from "../i18n.jsx";
 export default function Settings() {
   const nav = useNavigate();
+  const { t } = useLang();
 
   // Profile (manager)
   const [profile, setProfile] = useState({ _id: "", name: "", email: "", phone: "", role: "manager" });
@@ -138,6 +140,9 @@ export default function Settings() {
   /* ---------- profile + password ---------- */
   async function saveProfile() {
     if (!profile._id) return;
+    // validate phone: if provided, must be 10 digits
+    const phoneDigits = (profile.phone || '').replace(/\D/g, '');
+    if (phoneDigits && phoneDigits.length !== 10) return showToast("Phone must be 10 digits", "error");
     const updated = await updateUser(profile._id, { name: profile.name, phone: profile.phone });
     setProfile((p) => ({ ...p, ...updated }));
     showToast("Changes have been saved.", "ok", "Profile updated");
@@ -155,6 +160,9 @@ export default function Settings() {
   /* ---------- add member ---------- */
   async function addMember() {
     if (!creating.name) return showToast("Full name is required", "error");
+    // require phone to be exactly 10 digits
+    const newPhone = (creating.phone || '').replace(/\D/g, '');
+    if (!newPhone || newPhone.length !== 10) return showToast("Member phone must be 10 digits", "error");
     try {
       const res = await createUser(creating);
       await reloadStaff();
@@ -235,7 +243,7 @@ export default function Settings() {
       <Toast item={toast} onClose={() => setToast(null)} />
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h2>Settings &amp; Staff</h2>
+        <h2>{t("settings.title", "Settings & Staff")}</h2>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <LanguageSwitcher />
           <button onClick={() => nav('/manager')} style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid #ccc", background: "#f7f7f7" }}>
@@ -246,43 +254,79 @@ export default function Settings() {
 
       <div style={{ display: "grid", gridTemplateColumns: "360px 1fr", gap: 16 }}>
         {/* Profile */}
-        <section style={card}>
-          <h4>Profile Information</h4>
+        <div style={{ display: 'grid', gap: 16 }}>
+          <section style={{ ...card, alignSelf: 'start' }}>
+          <h4>{t("settings.profile", "Profile Information")}</h4>
           <div style={{ height: 8 }} />
           <div style={col}>
-            <div><div style={label}>Full Name</div>
+            <div><div style={label}>{t("settings.fullName", "Full Name")}</div>
               <input style={input} value={profile.name || ""} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))} />
             </div>
-            <div><div style={label}>Email</div>
+            <div><div style={label}>{t("settings.email", "Email")}</div>
               <input style={input} disabled value={profile.email || ""} />
             </div>
-            <div><div style={label}>Phone</div>
-              <input style={input} value={profile.phone || ""} onChange={e => setProfile(p => ({ ...p, phone: e.target.value }))} />
+            <div><div style={label}>{t("settings.phone", "Phone")}</div>
+              <input
+                style={input}
+                type="tel"
+                inputMode="numeric"
+                maxLength={10}
+                pattern="[0-9]*"
+                value={profile.phone || ""}
+                onChange={e => setProfile(p => ({ ...p, phone: e.target.value.replace(/\D/g, '').slice(0,10) }))}
+              />
             </div>
-            <div><div style={label}>Role</div>
+            <div><div style={label}>{t("settings.role", "Role")}</div>
               <select style={input} disabled value={profile.role || "manager"}><option>manager</option></select>
             </div>
             <div style={{ textAlign: "right" }}>
-              <button onClick={saveProfile} style={tinyBtn}>Save changes</button>
+              <button onClick={saveProfile} style={tinyBtn}>{t("settings.save", "Save changes")}</button>
             </div>
           </div>
         </section>
+
+          {/* Password card (moved under Profile) */}
+          <section style={card}>
+            <h4>{t("settings.password", "Password")}</h4>
+            <div style={col}>
+              <div>
+                <div style={label}>{t("settings.currentPassword", "Current Password")}</div>
+                <input style={input} type="password" value={pw.cur} onChange={e => setPw(p => ({ ...p, cur: e.target.value }))} />
+              </div>
+              <div style={row2}>
+                <div>
+                  <div style={label}>{t("settings.newPassword", "New Password (min 8)")}</div>
+                  <input style={input} type="password" value={pw.n1} onChange={e => setPw(p => ({ ...p, n1: e.target.value }))} />
+                </div>
+                <div>
+                  <div style={label}>{t("settings.confirmPassword", "Confirm New Password")}</div>
+                  <input style={input} type="password" value={pw.n2} onChange={e => setPw(p => ({ ...p, n2: e.target.value }))} />
+                </div>
+              </div>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+                <button onClick={() => setPw({ cur: "", n1: "", n2: "" })} style={tinyBtn}>{t("settings.clear", "Clear")}</button>
+                <button onClick={updatePassword} style={tinyBtn}>{t("settings.updatePassword", "Update Password")}</button>
+              </div>
+            </div>
+          </section>
+
+        </div>
 
         {/* Staff table */}
         <div style={{ display: "grid", gap: 16 }}>
           <section style={card}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h4>Staff Management</h4>
+              <h4>{t("settings.staffManagement", "Staff Management")}</h4>
               <div style={{ display: "flex", gap: 8 }}>
                 <input
-                  placeholder="Search by name / phone / userId / email"
+                  placeholder={t("settings.searchPh", "Search by name / phone / userId / email")}
                   style={input}
                   value={q}
                   onChange={e => setQ(e.target.value)}
                   onKeyDown={e => e.key === "Enter" && reloadStaff()}
                 />
-                <button onClick={reloadStaff} style={tinyBtn}>Search</button>
-                <button onClick={() => setShowAdd(true)} style={tinyBtn}>Add member</button>
+                <button onClick={reloadStaff} style={tinyBtn}>{t("settings.search", "Search")}</button>
+                <button onClick={() => setShowAdd(true)} style={tinyBtn}>{t("settings.addMember", "Add member")}</button>
               </div>
             </div>
 
@@ -290,11 +334,11 @@ export default function Settings() {
               <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0 }}>
                 <thead>
                   <tr style={{ textAlign: "left" }}>
-                    <th style={{ padding: "8px 6px" }}>User ID</th>
-                    <th style={{ padding: "8px 6px" }}>Name</th>
-                    <th style={{ padding: "8px 6px" }}>Phone</th>
-                    <th style={{ padding: "8px 6px" }}>Role</th>
-                    <th style={{ padding: "8px 6px" }}>Status</th>
+                    <th style={{ padding: "8px 6px" }}>{t("settings.userId", "User ID")}</th>
+                    <th style={{ padding: "8px 6px" }}>{t("settings.name", "Name")}</th>
+                    <th style={{ padding: "8px 6px" }}>{t("settings.phone", "Phone")}</th>
+                    <th style={{ padding: "8px 6px" }}>{t("settings.role", "Role")}</th>
+                    <th style={{ padding: "8px 6px" }}>{t("settings.status", "Status")}</th>
                     <th style={{ padding: "8px 6px" }} />
                   </tr>
                 </thead>
@@ -308,25 +352,25 @@ export default function Settings() {
                         <td style={{ padding: "8px 6px" }}>{u.phone || "—"}</td>
                         <td style={{ padding: "8px 6px" }}>{u.role}</td>
                         <td style={{ padding: "8px 6px" }}>
-                          <span style={pill(status)}>{status === "active" ? "Active" : "On leave"}</span>
+                          <span style={pill(status)}>{status === "active" ? t("settings.active", "Active") : t("settings.onLeave", "On leave")}</span>
                         </td>
                         <td style={{ padding: "8px 6px" }}>
-                          <button style={tinyBtn} onClick={() => openDetail(u)}>View details</button>
+                          <button style={tinyBtn} onClick={() => openDetail(u)}>{t("settings.viewDetails", "View details")}</button>
                         </td>
                       </tr>
                     );
                   })}
-                  {!pagedStaff.length && <tr><td colSpan="6" style={{ padding: 12, color: "#777" }}>No staff to show.</td></tr>}
+                  {!pagedStaff.length && <tr><td colSpan="6" style={{ padding: 12, color: "#777" }}>{t("settings.noStaff", "No staff to show.")}</td></tr>}
                 </tbody>
               </table>
 
               {/* pagination */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 12 }}>
-                <div style={{ color: "#666", fontSize: 13 }}>Page {page} of {pageCount} · {staff.length} total</div>
+                <div style={{ color: "#666", fontSize: 13 }}>{t("settings.pageInfo", `Page ${page} of ${pageCount} · ${staff.length} total`)}</div>
                 <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                  <button style={tinyBtn} disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>◀ Prev</button>
+                  <button style={tinyBtn} disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>{t("settings.prev", "◀ Prev")}</button>
                   <span style={{ fontSize: 13 }}>{page}</span>
-                  <button style={tinyBtn} disabled={page >= pageCount} onClick={() => setPage(p => Math.min(pageCount, p + 1))}>Next ▶</button>
+                  <button style={tinyBtn} disabled={page >= pageCount} onClick={() => setPage(p => Math.min(pageCount, p + 1))}>{t("settings.next", "Next ▶")}</button>
                 </div>
               </div>
             </div>
@@ -361,32 +405,6 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* Password card */}
-      <div style={{ width: 360 }}>
-        <section style={card}>
-          <h4>Password</h4>
-          <div style={col}>
-            <div>
-              <div style={label}>Current Password</div>
-              <input style={input} type="password" value={pw.cur} onChange={e => setPw(p => ({ ...p, cur: e.target.value }))} />
-            </div>
-            <div style={row2}>
-              <div>
-                <div style={label}>New Password (min 8)</div>
-                <input style={input} type="password" value={pw.n1} onChange={e => setPw(p => ({ ...p, n1: e.target.value }))} />
-              </div>
-              <div>
-                <div style={label}>Confirm New Password</div>
-                <input style={input} type="password" value={pw.n2} onChange={e => setPw(p => ({ ...p, n2: e.target.value }))} />
-              </div>
-            </div>
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-              <button onClick={() => setPw({ cur: "", n1: "", n2: "" })} style={tinyBtn}>Clear</button>
-              <button onClick={updatePassword} style={tinyBtn}>Update Password</button>
-            </div>
-          </div>
-        </section>
-      </div>
 
       {/* Details modal */}
       {detail && (
@@ -475,7 +493,15 @@ export default function Settings() {
               <div style={row2}>
                 <label style={{ display: "grid", gap: 6 }}>
                   <span style={label}>Phone</span>
-                  <input style={input} value={creating.phone} onChange={e => setCreating(s => ({ ...s, phone: e.target.value }))}/>
+                      <input
+                        style={input}
+                        type="tel"
+                        inputMode="numeric"
+                        maxLength={10}
+                        pattern="[0-9]*"
+                        value={creating.phone}
+                        onChange={e => setCreating(s => ({ ...s, phone: e.target.value.replace(/\D/g, '').slice(0,10) }))}
+                      />
                 </label>
                 <label style={{ display: "grid", gap: 6 }}>
                   <span style={label}>Role</span>
