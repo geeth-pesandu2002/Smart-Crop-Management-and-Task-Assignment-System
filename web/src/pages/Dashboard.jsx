@@ -97,6 +97,7 @@ export default function Dashboard() {
           <NavLink to="/plots"     label="Land & Crop"   active={location.pathname.startsWith("/plots")} />
           <NavLink to="/resources" label="Resources"     active={location.pathname.startsWith("/resources")} />
           <NavLink to="/reports"   label="Reports"       active={location.pathname.startsWith("/reports")} />
+          <NavLink to="/reports/field"   label="Field Reports"       active={location.pathname.startsWith("/reports/field")} />
           <NavLink to="/settings"  label="Settings"      active={location.pathname.startsWith("/settings")} />
 
           <div style={{ marginTop: "auto", display: "grid", gap: 8 }}>
@@ -241,6 +242,7 @@ function NavLink({ to, label, active }) {
         background: active ? "rgba(22,163,74,.12)" : "transparent",
         color: active ? "#166534" : "inherit",
         fontWeight: 600,
+        textDecoration: 'none',
       }}
     >
       {label}
