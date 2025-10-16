@@ -18,6 +18,11 @@ app.use(express.json());
 const uploadsDir = path.join(__dirname, 'uploads');
 try { require('fs').mkdirSync(uploadsDir, { recursive: true }); } catch (e) {}
 app.use('/uploads', express.static(uploadsDir));
+// Also serve the same uploads under the API prefix so clients that build URLs
+// using the API base (eg. http://host:4000/api + '/uploads/xxx') will work.
+app.use('/api/uploads', express.static(uploadsDir));
+// Ensure voice subfolder exists so multer can write files there
+try { require('fs').mkdirSync(path.join(uploadsDir, 'voice'), { recursive: true }); } catch (e) {}
 
 app.get('/', (_req, res) => res.send('OK'));
 app.get('/api/health', (_req, res) => res.json({ ok: true }));

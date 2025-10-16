@@ -18,8 +18,11 @@ const upload = multer({ storage });
 // Single file upload under form field 'file'
 router.post('/', upload.single('file'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'no file' });
-  // return public URL path (server serves /uploads static)
-  const url = `/uploads/${req.file.filename}`;
+  // Build an absolute URL so clients (mobile/web) can use it directly.
+  // Prefer the request's Host header and protocol.
+  const host = req.get('host');
+  const proto = req.protocol || 'http';
+  const url = `${proto}://${host}/api/uploads/${req.file.filename}`;
   res.json({ url });
 });
 

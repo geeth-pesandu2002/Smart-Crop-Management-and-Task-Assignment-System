@@ -61,7 +61,9 @@ const upload = multer({ storage });
 
 router.post('/voice', auth(['manager']), upload.single('voice'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'no file' });
-  res.json({ url: `/uploads/voice/${req.file.filename}` });
+  const host = req.get('host');
+  const proto = req.protocol || 'http';
+  res.json({ url: `${proto}://${host}/api/uploads/voice/${req.file.filename}` });
 });
 
 /* ---------------- create task (individual or group) ---------------- */
