@@ -80,7 +80,7 @@ export default function Dashboard() {
     <>
       {!allowed && <Navigate to="/login" replace />}
 
-      <div style={{ display: "grid", gridTemplateColumns: "220px 1fr", gap: 16, minHeight: "100vh" }}>
+  <div style={{ display: "grid", gridTemplateColumns: "220px 1fr", gap: 16, height: "100vh", overflow: 'hidden' }}>
         {/* Sidebar */}
         <aside style={{
           background: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.5)",
@@ -107,7 +107,7 @@ export default function Dashboard() {
         </aside>
 
         {/* Main */}
-        <main className="container" style={{ padding: 0 }}>
+        <main className="container" style={{ padding: 0, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
           <header className="nav" style={{ marginBottom: 16 }}>
             <div style={{ fontSize: 22, fontWeight: 800 }}>Main Dashboard</div>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -119,8 +119,10 @@ export default function Dashboard() {
             </div>
           </header>
 
-          {/* KPI row */}
-          <section style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+          {/* Content (scrollable) */}
+          <div style={{ flex: 1, overflow: 'auto', padding: '0 24px 24px 24px' }}>
+            {/* KPI row */}
+            <section style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
             <KpiCard title="Crop Status" big="95% Healthy" sub="Overall health of active crops" action="View Details" />
             <KpiCard title="Soil Condition Alerts" big={`${alerts.length} Active Alerts`} sub="Immediate issues from sensors" action="View Details" />
             <KpiCard
@@ -137,10 +139,10 @@ export default function Dashboard() {
               action="View Details"
               to="/reports"
             />
-          </section>
+            </section>
 
-          {/* Map */}
-          <section style={{ marginTop: 22 }}>
+            {/* Map */}
+            <section style={{ marginTop: 22 }}>
             <h3 style={{ margin: "8px 0 12px" }}>Interactive Farm Map</h3>
 
             <div className="card" style={{ position: "relative" }}>
@@ -223,9 +225,10 @@ export default function Dashboard() {
                 </div>
               )}
             </div>
-          </section>
+            </section>
+          </div>
 
-          <div className="footer" style={{ marginTop: 40 }}>© 2025 Labuduwa Farmhouse</div>
+          <div className="footer" style={{ marginTop: 12, padding: '12px 24px' }}>© 2025 Labuduwa Farmhouse</div>
         </main>
       </div>
     </>
