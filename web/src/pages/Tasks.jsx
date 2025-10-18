@@ -266,12 +266,13 @@ export default function Tasks() {
       {/* Header + Mode + Language */}
       <div className="page-header">
         <div>
-          <h2 style={{ margin: 0, color: "#fff" }}>{t("tasks.title")}</h2>
-          <p className="sub" style={{ margin: 0, color: "rgba(255,255,255,.9)" }}>
+          <h2 style={{ margin: 0, color: "#111" }}>{t("tasks.title")}</h2>
+          <p className="sub" style={{ margin: 0, color: "#222" }}>
             {CAN_OVERRIDE ? t("tasks.subtitle") : "Latest 10 tasks. Status is read-only here; updated from the mobile app."}
           </p>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <LanguageSwitcher />
           <div className="segment" role="tablist" aria-label="Assign mode">
             <button
               type="button"
@@ -288,39 +289,65 @@ export default function Tasks() {
               {t("tasks.modeGroup")}
             </button>
           </div>
-          <LanguageSwitcher />
+          <button
+            type="button"
+            style={{
+              padding: "8px 20px",
+              fontWeight: 700,
+              borderRadius: "999px",
+              background: "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)",
+              color: "#fff",
+              border: "none",
+              boxShadow: "0 2px 8px rgba(34,197,94,0.10)",
+              letterSpacing: "0.5px",
+              fontSize: "15px",
+              transition: "background 0.2s, box-shadow 0.2s",
+              cursor: "pointer"
+            }}
+            onMouseOver={e => {
+              e.currentTarget.style.background = "linear-gradient(90deg, #16a34a 0%, #22c55e 100%)";
+              e.currentTarget.style.boxShadow = "0 4px 16px rgba(34,197,94,0.18)";
+            }}
+            onMouseOut={e => {
+              e.currentTarget.style.background = "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)";
+              e.currentTarget.style.boxShadow = "0 2px 8px rgba(34,197,94,0.10)";
+            }}
+            onClick={() => window.location.href = "/manager"}
+          >
+            Dashboard
+          </button>
         </div>
       </div>
 
       <div className="panel">
-        {/* LEFT: Create/Assign form */}
-        <div className="card">
+  {/* LEFT: Create/Assign form */}
+  <div className="card create-task">
           <h3>{t("tasks.form.create")}</h3>
           <p className="sub">{t("tasks.form.hint")}</p>
 
-          <form onSubmit={submit} style={{ display: "grid", gap: 12 }}>
-            <div className="grid2">
-              <div className="field">
-                <label>{t("tasks.form.title")}</label>
-                <input
-                  className="input"
-                  placeholder={t("tasks.form.titlePh")}
-                  value={form.title}
-                  onChange={(ev) => setForm({ ...form, title: ev.target.value })}
-                />
-              </div>
-              <div className="field">
-                <label>{t("tasks.form.priority")}</label>
-                <select
-                  className="select"
-                  value={form.priority}
-                  onChange={(ev) => setForm({ ...form, priority: ev.target.value })}
-                >
-                  <option value="low">{t("tasks.form.low")}</option>
-                  <option value="normal">{t("tasks.form.normal")}</option>
-                  <option value="high">{t("tasks.form.high")}</option>
-                </select>
-              </div>
+          <form onSubmit={submit} style={{ display: "grid", gap: 12, marginBottom: 0 }}>
+            <div className="field" style={{ marginBottom: 16 }}>
+              <label>{t("tasks.form.title")}</label>
+              <input
+                className="input"
+                style={{ width: '100%', boxSizing: 'border-box' }}
+                placeholder={t("tasks.form.titlePh")}
+                value={form.title}
+                onChange={(ev) => setForm({ ...form, title: ev.target.value })}
+              />
+            </div>
+            <div className="field" style={{ marginBottom: 16 }}>
+              <label>{t("tasks.form.priority")}</label>
+              <select
+                className="select"
+                style={{ width: '100%', boxSizing: 'border-box' }}
+                value={form.priority}
+                onChange={(ev) => setForm({ ...form, priority: ev.target.value })}
+              >
+                <option value="low">{t("tasks.form.low")}</option>
+                <option value="normal">{t("tasks.form.normal")}</option>
+                <option value="high">{t("tasks.form.high")}</option>
+              </select>
             </div>
 
             <div className="field">
@@ -328,6 +355,7 @@ export default function Tasks() {
               <textarea
                 className="input"
                 rows={3}
+                style={{ width: '100%', boxSizing: 'border-box', resize: 'vertical', marginBottom: 16 }}
                 placeholder={t("tasks.form.descPh")}
                 value={form.description}
                 onChange={(ev) => setForm({ ...form, description: ev.target.value })}
@@ -335,7 +363,7 @@ export default function Tasks() {
             </div>
 
             {mode === "individual" ? (
-              <div className="field">
+              <div className="field" style={{ marginBottom: 16 }}>
                 <label>{t("tasks.form.assignStaff")}</label>
                 <select
                   className="select"
@@ -345,7 +373,7 @@ export default function Tasks() {
                   <option value="">{t("tasks.form.selectStaff")}</option>
                   {staff.map((s) => (
                     <option key={s._id} value={s._id}>
-                      {s.name} ({s.email})
+                      {s.name}{s.email ? ` (${s.email})` : ""}
                     </option>
                   ))}
                 </select>
@@ -376,11 +404,11 @@ export default function Tasks() {
               </>
             )}
 
-            <div className="grid3">
-              <div className="field">
+              <div className="field" style={{ marginBottom: 16 }}>
                 <label>{t("tasks.form.plot")}</label>
                 <select
                   className="select"
+                  style={{ width: '100%', boxSizing: 'border-box' }}
                   value={form.plotId}
                   onChange={(ev) => setForm({ ...form, plotId: ev.target.value })}
                 >
@@ -392,37 +420,28 @@ export default function Tasks() {
                   ))}
                 </select>
               </div>
-              <div className="field">
+              <div className="field" style={{ marginBottom: 16 }}>
                 <label>{t("tasks.form.due")}</label>
                 <input
                   className="input"
                   type="date"
+                  style={{ width: '100%', boxSizing: 'border-box' }}
                   value={form.dueDate}
                   onChange={(ev) => setForm({ ...form, dueDate: ev.target.value })}
                 />
               </div>
-              <div className="field">
+              <div className="field" style={{ marginBottom: 16 }}>
                 <label>{t("tasks.form.voice")}</label>
-                <div className="btnbar">
+                <div className="btnbar" style={{ gap: 8 }}>
                   <input
                     className="input"
                     type="file"
                     accept="audio/*"
                     onChange={(ev) => setVoiceFile(ev.target.files?.[0] || null)}
                   />
-                  <button
-                    type="button"
-                    className="btn ghost"
-                    onClick={uploadVoice}
-                    disabled={!voiceFile || uploading}
-                    title={t("tasks.form.attach")}
-                  >
-                    {uploading ? "Uploading…" : t("tasks.form.attach")}
-                  </button>
                   {form.voiceUrl && <span className="badge">{t("tasks.form.attached")}</span>}
                 </div>
               </div>
-            </div>
 
             <div className="btnbar">
               <button className="btn primary" type="submit" disabled={!canSubmit}>
@@ -446,12 +465,7 @@ export default function Tasks() {
               </button>
             </div>
           </form>
-
-          {msg && (
-            <div className={`note ${msg.startsWith('✅') ? 'ok' : msg.startsWith('❌') ? 'err' : ''}`}>
-              {msg}
-            </div>
-          )}
+          {/* Remove extra space below buttons by not rendering anything after the form */}
         </div>
 
         {/* RIGHT: Filters + Recent table */}
