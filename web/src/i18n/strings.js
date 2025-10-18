@@ -3,6 +3,14 @@ const STRINGS = {
   en: {
       brand: "Smart Crop Management and Task Assignment System",
       settings: {
+  delete: "Delete",
+  confirmDelete: "Are you sure you want to delete this user?",
+  deleteSuccess: "User deleted.",
+  deleteFail: "Failed to delete user.",
+  delete: "ඉවත් කරන්න",
+  confirmDelete: "මෙම පරිශීලකයා ඉවත් කිරීමට ඔබට විශ්වාසද?",
+  deleteSuccess: "පරිශීලකයා ඉවත් කරන ලදී.",
+  deleteFail: "පරිශීලකයා ඉවත් කිරීමට නොහැකි විය.",
         title: "Settings & Staff",
         profile: "Profile Information",
         fullName: "Full Name",

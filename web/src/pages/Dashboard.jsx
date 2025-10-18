@@ -59,7 +59,19 @@ function NavLink({ to, label, active }) {
 
 function KpiCard({ title, big, sub, action, to }) {
   const content = (
-    <div className="card kpi-card" style={{ display: "grid", gap: 6 }}>
+    <div
+      className="card kpi-card"
+      style={{
+        display: "grid",
+        gap: 6,
+        minHeight: 120,
+        height: "100%",
+        boxSizing: "border-box",
+        alignItems: "center",
+        justifyItems: "start",
+        padding: 16
+      }}
+    >
       <div style={{ fontWeight: 700 }}>{title}</div>
       <div style={{ fontSize: 22, fontWeight: 800 }}>{big}</div>
       <div className="p" style={{ margin: 0 }}>{sub}</div>
@@ -164,20 +176,20 @@ export default function Dashboard() {
                 big={loadTasks || !taskSum ? "…" : `${taskSum.pending} Pending`}
                 sub="Tasks needing attention and in progress"
                 action="View Details"
-                to="/tasks"
+                to={null}
               />
               <KpiCard
                 title="Financial Snapshot"
                 big={`Rs. ${finance.revenue.toLocaleString()}`}
                 sub={`Revenue (Δ ${finance.delta > 0 ? "+" : ""}${finance.delta}%)`}
                 action="View Details"
-                to="/reports"
+                to={null}
               />
             </section>
 
             {/* Map */}
             <section style={{ marginTop: 22 }}>
-              <h3 style={{ margin: "8px 0 12px" }}>Interactive Farm Map</h3>
+              <h3 style={{ margin: "8px 0 12px" }}>Farm Map</h3>
 
               <div className="card" style={{ position: "relative" }}>
                 <div style={{ height: 560, borderRadius: 12, overflow: "hidden", border: "1px solid var(--line)" }}>

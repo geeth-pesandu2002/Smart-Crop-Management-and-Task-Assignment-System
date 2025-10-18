@@ -199,7 +199,40 @@ router.post('/:id/reset-pin', auth(['manager']), async (req, res) => {
 
 router.delete('/:id', auth(['manager']), async (req, res) => {
   try {
-    await User.findByIdAndDelete(req.params.id);
+    const userId = req.params.id;
+    const mongoose = require('mongoose');
+    const userObjId = mongoose.Types.ObjectId(userId);
+
+    // Remove user from all groups
+    const Group = require('../models/Group');
+    await Group.updateMany({}, { $pull: { members: userObjId } });
+
+    // Delete all tasks assigned to or created by the user
+    const Task = require('../models/Task');
+    await Task.deleteMany({ $or: [ { assignedTo: userObjId }, { createdBy: userObjId } ] });
+
+    // Delete all leaves for the user
+    const Leave = require('../models/Leave');
+    await Leave.deleteMany({ user: userObjId });
+
+    // Delete all reports by the user
+    const Report = require('../models/Report');
+    await Report.deleteMany({ userId: userObjId });
+
+    // Delete all resource usages created by the user
+    const ResourceUsage = require('../models/ResourceUsage');
+    await ResourceUsage.deleteMany({ createdBy: userObjId });
+
+    // Delete all issues reported by the user
+    const Issue = require('../models/Issue');
+    await Issue.deleteMany({ reportedBy: userObjId });
+
+    // Remove user as manager from plots
+    const Plot = require('../models/Plot');
+    await Plot.updateMany({ manager: userObjId }, { $unset: { manager: "" } });
+
+    // Finally, delete the user document
+    await User.findByIdAndDelete(userObjId);
     res.json({ ok: true });
   } catch (e) {
     console.error('delete user failed', e);

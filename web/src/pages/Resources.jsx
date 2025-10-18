@@ -376,7 +376,6 @@ export default function Resources() {
               <tr>
                 <th>{L("Date", "දිනය")}</th>
                 <th>{L("Type", "වර්ගය")}</th>
-                <th>{L("Plot", "බිම් කොටස")}</th>
                 <th>{L("Field", "ක්ෂේත්‍රය")}</th>
                 <th>{L("Qty", "ප්‍රමාණය")}</th>
                 <th>{L("Cost", "වියදම")}</th>
@@ -389,7 +388,6 @@ export default function Resources() {
                 <tr key={u._id}>
                   <td>{dayjs(u.date).format("YYYY-MM-DD")}</td>
                   <td>{u.type}</td>
-                  <td>{plotLabel(u.plot)}</td>
                   <td>{u.fieldName || "—"}</td>
                   <td>{u.quantity?.value} {u.quantity?.unit}</td>
                   <td>{money(u.cost)}</td>

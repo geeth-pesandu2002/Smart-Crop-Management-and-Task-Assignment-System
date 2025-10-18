@@ -19,6 +19,7 @@ export const updateUser       = (id, payload) => api.patch(`/users/${id}`, paylo
 export const setUserStatus    = (id, status)  => api.patch(`/users/${id}/status`, { status }).then(r => r.data);
 export const resetUserPassword= (id)          => api.post(`/users/${id}/reset-password`).then(r => r.data);
 export const resetUserPin     = (id)          => api.post(`/users/${id}/reset-pin`).then(r => r.data);
+export const deleteUser       = (id)          => api.delete(`/users/${id}`).then(r => r.data);
 
 /* ---------------- LEAVES ---------------- */
 export const listLeaves       = (params = {}) => api.get("/leaves", { params }).then(r => r.data);

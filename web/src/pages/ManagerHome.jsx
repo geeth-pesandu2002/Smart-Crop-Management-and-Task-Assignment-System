@@ -25,7 +25,7 @@ export default function ManagerHome() {
   };
 
   return (
-    <div style={{padding:24}}>
+  <div style={{padding:24, display:'flex', flexDirection:'column', alignItems:'flex-start'}}>
       <header style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
         <h2>Manager Dashboard</h2>
         <button onClick={() => { clearAuth(); nav('/login'); }}>Log out</button>

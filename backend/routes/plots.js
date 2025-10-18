@@ -198,16 +198,29 @@ router.patch('/:id/harvests/:hid', requireAuth, async (req, res) => {
 
 router.delete('/:id/harvests/:hid', requireAuth, async (req, res) => {
   try {
-    const plot = await Plot.findById(req.params.id);
-    if (!plot) return res.status(404).json({ error: 'Plot not found' });
-    const h = plot.harvests.id(req.params.hid);
-    if (!h) return res.status(404).json({ error: 'Harvest not found' });
+    const { id, hid } = req.params;
+    console.log(`[DELETE HARVEST] plotId=${id}, harvestId=${hid}`);
+    const plot = await Plot.findById(id);
+    if (!plot) {
+      console.error(`[DELETE HARVEST] Plot not found: ${id}`);
+      return res.status(404).json({ error: 'Plot not found', plotId: id });
+    }
+    const h = plot.harvests.id(hid);
+    if (!h) {
+      console.error(`[DELETE HARVEST] Harvest not found: plotId=${id}, harvestId=${hid}`);
+      return res.status(404).json({ error: 'Harvest not found', plotId: id, harvestId: hid });
+    }
     h.remove();
-    await plot.save();
+    try {
+      await plot.save();
+    } catch (saveErr) {
+      console.error(`[DELETE HARVEST] Error saving plot after removing harvest:`, saveErr);
+      return res.status(500).json({ error: 'Failed to save plot after deleting harvest', details: saveErr?.message });
+    }
     res.json(plot);
   } catch (e) {
     console.error('DELETE /plots/:id/harvests/:hid error:', e);
-    res.status(500).json({ error: 'Failed to delete harvest' });
+    res.status(500).json({ error: 'Failed to delete harvest', details: e?.message });
   }
 });
 

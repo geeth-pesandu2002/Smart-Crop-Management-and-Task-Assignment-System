@@ -354,8 +354,23 @@ export default function Settings() {
                         <td style={{ padding: "8px 6px" }}>
                           <span style={pill(status)}>{status === "active" ? t("settings.active", "Active") : t("settings.onLeave", "On leave")}</span>
                         </td>
-                        <td style={{ padding: "8px 6px" }}>
+                        <td style={{ padding: "8px 6px", display: "flex", gap: 6 }}>
                           <button style={tinyBtn} onClick={() => openDetail(u)}>{t("settings.viewDetails", "View details")}</button>
+                          {u.role !== "manager" && (
+                            <button style={{ ...tinyBtn, background: "#ffeaea", color: "#b91c1c", border: "1px solid #fca5a5" }}
+                              onClick={async () => {
+                                if (window.confirm(t("settings.confirmDelete", "Are you sure you want to delete this user?"))) {
+                                  try {
+                                    await api.deleteUser(u._id);
+                                    showToast(t("settings.deleteSuccess", "User deleted."), "ok");
+                                    await reloadStaff();
+                                  } catch (e) {
+                                    showToast(t("settings.deleteFail", "Failed to delete user."), "error");
+                                  }
+                                }
+                              }}
+                            >{t("settings.delete", "Delete")}</button>
+                          )}
                         </td>
                       </tr>
                     );
@@ -378,7 +393,7 @@ export default function Settings() {
 
           {/* Currently on Leave (from API) */}
           <section style={card}>
-            <h4>Currently on Leave</h4>
+            <h4>{t("settings.currentlyOnLeave", "Currently on Leave")}</h4>
             <div style={{ marginTop: 12, display: "grid", gap: 8 }}>
               {activeLeaves.map((l) => {
                 const u = l.user || {};
@@ -392,14 +407,14 @@ export default function Settings() {
                         <div style={{ fontSize: 12, color: "#666" }}>{s} → {e}{l.reason ? ` · ${l.reason}` : ""}</div>
                       </div>
                       <div style={{ display: "flex", gap: 8 }}>
-                        <button style={tinyBtn} onClick={() => extendOneDay(l)}>Extend 1 day</button>
-                        <button style={tinyBtn} onClick={() => endLeave(l._id, u)}>End today</button>
+                        <button style={tinyBtn} onClick={() => extendOneDay(l)}>{t("settings.extendOneDay", "Extend 1 day")}</button>
+                        <button style={tinyBtn} onClick={() => endLeave(l._id, u)}>{t("settings.endToday", "End today")}</button>
                       </div>
                     </div>
                   </div>
                 );
               })}
-              {!activeLeaves.length && <div style={{ color: "#777" }}>Everyone is active.</div>}
+              {!activeLeaves.length && <div style={{ color: "#777" }}>{t("settings.everyoneActive", "Everyone is active.")}</div>}
             </div>
           </section>
         </div>
