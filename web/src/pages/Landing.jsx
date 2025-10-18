@@ -17,7 +17,7 @@ export default function Landing() {
 
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
             <LanguageSwitcher />
-            <Link to="/login" className="btn">{t("nav.login")}</Link>
+            <Link to="/login" className="btn" style={{ textDecoration: "none" }}>{t("nav.login")}</Link>
           </div>
         </nav>
 
@@ -27,8 +27,7 @@ export default function Landing() {
             <h1 className="h1">{t("landing.headline")}</h1>
             <p className="p">{t("landing.sub")}</p>
             <div className="actions">
-              <Link to="/login" className="btn">{t("landing.getStarted")}</Link>
-              <Link to="/manager" className="btn outline">{t("nav.dashboard")}</Link>
+              <Link to="/login" className="btn" style={{ textDecoration: "none" }}>{t("landing.getStarted")}</Link>
             </div>
             <p className="p" style={{ marginTop: 16 }}>
               <strong>{t("nav.support")}:</strong> manager@labuduwafarmhouse.lk · +94 71 234 5678
