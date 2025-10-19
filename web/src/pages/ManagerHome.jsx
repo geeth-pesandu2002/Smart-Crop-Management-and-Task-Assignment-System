@@ -26,9 +26,13 @@ export default function ManagerHome() {
 
   return (
   <div style={{padding:24, display:'flex', flexDirection:'column', alignItems:'flex-start'}}>
-      <header style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+      <header style={{display:'flex', justifyContent:'space-between', alignItems:'center', width:'100%'}}>
         <h2>Manager Dashboard</h2>
-        <button onClick={() => { clearAuth(); nav('/login'); }}>Log out</button>
+        <div style={{display:'flex', gap:16, alignItems:'center'}}>
+          <a href="#" onClick={e => { e.preventDefault(); /* add help logic here */ }} style={{ textDecoration: 'none', color: '#2563eb', fontWeight: 500, cursor: 'pointer' }}>Help</a>
+          <a href="#" onClick={e => { e.preventDefault(); /* add notification logic here */ }} style={{ textDecoration: 'none', color: '#2563eb', fontWeight: 500, cursor: 'pointer' }}>Notifications</a>
+          <button onClick={() => { clearAuth(); nav('/login'); }} style={{ background: 'none', border: 'none', color: '#2563eb', fontWeight: 500, cursor: 'pointer', textDecoration: 'none', padding: 0 }}>Log out</button>
+        </div>
       </header>
 
       <h3 style={{marginTop:24}}>Assign Task</h3>

@@ -41,8 +41,8 @@
   color: #888;
 }
 
-/* Remove underlines for app navigation links */
-a, a:visited {
+/* Remove underlines for app navigation links and .btn.outline links */
+a, a:visited, a.btn.outline {
   text-decoration: none;
   color: inherit;
 }

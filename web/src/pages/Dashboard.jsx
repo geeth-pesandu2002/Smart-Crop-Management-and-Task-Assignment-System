@@ -76,11 +76,15 @@ function KpiCard({ title, big, sub, action, to }) {
       <div style={{ fontSize: 22, fontWeight: 800 }}>{big}</div>
       <div className="p" style={{ margin: 0 }}>{sub}</div>
       <div style={{ marginTop: 6 }}>
-        <span className="link">{action}</span>
+        {to ? (
+          <Link to={to} className="kpi-btn">{action}</Link>
+        ) : (
+          <span className="kpi-btn" style={{ pointerEvents: 'none', opacity: 0.7 }}>{action}</span>
+        )}
       </div>
     </div>
   );
-  return to ? <Link to={to}>{content}</Link> : content;
+  return content;
 }
 
 export default function Dashboard() {
@@ -176,14 +180,14 @@ export default function Dashboard() {
                 big={loadTasks || !taskSum ? "…" : `${taskSum.pending} Pending`}
                 sub="Tasks needing attention and in progress"
                 action="View Details"
-                to={null}
+                to="/tasks"
               />
               <KpiCard
                 title="Financial Snapshot"
                 big={`Rs. ${finance.revenue.toLocaleString()}`}
                 sub={`Revenue (Δ ${finance.delta > 0 ? "+" : ""}${finance.delta}%)`}
                 action="View Details"
-                to={null}
+                to="/plots"
               />
             </section>
 
