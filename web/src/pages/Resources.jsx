@@ -192,11 +192,35 @@ export default function Resources() {
       <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto auto", gap: 12, alignItems: "center" }}>
         <h2 style={{ margin: 0 }}>{L("Resource Management", "සාධන කළමනාකරණය")}</h2>
 
-        <Link to={dashboardPath} className="btn linklike">
-          {L("Go to Dashboard", "ඩෑෂ්බෝඩ් වෙත යන්න")}
-        </Link>
 
         <div><LanguageSwitcher /></div>
+        <Link to={dashboardPath}>
+          <button
+            style={{
+              background: "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)",
+              color: "#fff",
+              fontWeight: 700,
+              padding: "10px 22px",
+              borderRadius: "999px",
+              border: "none",
+              boxShadow: "0 2px 8px rgba(34,197,94,0.10)",
+              letterSpacing: "0.5px",
+              fontSize: "15px",
+              transition: "background 0.2s, box-shadow 0.2s",
+              cursor: "pointer"
+            }}
+            onMouseOver={e => {
+              e.currentTarget.style.background = "linear-gradient(90deg, #16a34a 0%, #22c55e 100%)";
+              e.currentTarget.style.boxShadow = "0 4px 16px rgba(34,197,94,0.18)";
+            }}
+            onMouseOut={e => {
+              e.currentTarget.style.background = "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)";
+              e.currentTarget.style.boxShadow = "0 2px 8px rgba(34,197,94,0.10)";
+            }}
+          >
+            {L("Dashboard", "ඩෑෂ්බෝඩ්")}
+          </button>
+        </Link>
 
         <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span className="field-label">{L("Year", "වර්ෂය")}</span>
@@ -356,7 +380,30 @@ export default function Resources() {
 
           {/* Submit row */}
           <div style={{ gridColumn: "span 12 / span 12" }}>
-            <button type="submit" className="btn">
+            <button
+              type="submit"
+              style={{
+                background: "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)",
+                color: "#fff",
+                fontWeight: 700,
+                padding: "10px 22px",
+                borderRadius: "999px",
+                border: "none",
+                boxShadow: "0 2px 8px rgba(34,197,94,0.10)",
+                letterSpacing: "0.5px",
+                fontSize: "15px",
+                transition: "background 0.2s, box-shadow 0.2s",
+                cursor: "pointer"
+              }}
+              onMouseOver={e => {
+                e.currentTarget.style.background = "linear-gradient(90deg, #16a34a 0%, #22c55e 100%)";
+                e.currentTarget.style.boxShadow = "0 4px 16px rgba(34,197,94,0.18)";
+              }}
+              onMouseOut={e => {
+                e.currentTarget.style.background = "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)";
+                e.currentTarget.style.boxShadow = "0 2px 8px rgba(34,197,94,0.10)";
+              }}
+            >
               {tab === "seeds"
                 ? L("Add Redo Usage", "නැවත තැබීම එකතු කරන්න")
                 : tab === "fertilizer"
@@ -419,10 +466,10 @@ export default function Resources() {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey={KEY_FERT} strokeWidth={2} />
-                <Line type="monotone" dataKey={KEY_SEED} strokeWidth={2} />
-                <Line type="monotone" dataKey={KEY_PEST} strokeWidth={2} />
-                <Line type="monotone" dataKey={KEY_TOTAL} strokeWidth={2} />
+                <Line type="monotone" dataKey={KEY_FERT} strokeWidth={2} stroke={COLOR_MAP.fertilizer} dot={{ r: 4 }} />
+                <Line type="monotone" dataKey={KEY_PEST} strokeWidth={2} stroke={COLOR_MAP.pesticide} dot={{ r: 4 }} />
+                <Line type="monotone" dataKey={KEY_SEED} strokeWidth={2} stroke={COLOR_MAP.seeds} dot={{ r: 4 }} />
+                <Line type="monotone" dataKey={KEY_TOTAL} strokeWidth={2} stroke="#0ea5e9" dot={{ r: 4 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>

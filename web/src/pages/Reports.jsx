@@ -162,8 +162,32 @@ export default function Reports() {
         <h2 style={{ margin: 0 }}>{L("Resource Usage Reports", "සාධන වාර්තා")}</h2>
         <div className="header-actions">
           <LanguageSwitcher />
-          <Link to={DASHBOARD_PATH} className="btn green no-underline">
-            {L("Go to Dashboard", "පුවරුවට යන්න")}
+          <Link to={DASHBOARD_PATH}>
+            <button
+              style={{
+                background: "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)",
+                color: "#fff",
+                fontWeight: 700,
+                padding: "10px 22px",
+                borderRadius: "999px",
+                border: "none",
+                boxShadow: "0 2px 8px rgba(34,197,94,0.10)",
+                letterSpacing: "0.5px",
+                fontSize: "15px",
+                transition: "background 0.2s, box-shadow 0.2s",
+                cursor: "pointer"
+              }}
+              onMouseOver={e => {
+                e.currentTarget.style.background = "linear-gradient(90deg, #16a34a 0%, #22c55e 100%)";
+                e.currentTarget.style.boxShadow = "0 4px 16px rgba(34,197,94,0.18)";
+              }}
+              onMouseOut={e => {
+                e.currentTarget.style.background = "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)";
+                e.currentTarget.style.boxShadow = "0 2px 8px rgba(34,197,94,0.10)";
+              }}
+            >
+              {L("Dashboard", "පුවරුව")}
+            </button>
           </Link>
         </div>
       </div>

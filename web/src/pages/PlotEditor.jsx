@@ -11,6 +11,7 @@ import {
   deleteHarvest,
   getPlots, // 👈 NEW: load other plots
 } from "../api.js";
+import { FARM } from "../farmConfig.js";
 import { useNavigate, useParams } from "react-router-dom";
 import HarvestTable from "../pages/HarvestTable.jsx";
 import { useLang } from "../i18n.jsx";
@@ -176,7 +177,7 @@ export default function PlotEditor() {
     if (coords.length) return coords[0];
     // try to center on first existing plot if available
     const firstOther = allPlots[0]?.ring?.[0];
-    return firstOther || [6.9271, 79.8612];
+    return firstOther || FARM.center;
   }, [coords, allPlots]);
 
   // unit conversions
@@ -230,10 +231,56 @@ export default function PlotEditor() {
         </div>
         <div className="btnbar" style={{ gap: 8 }}>
           <LanguageSwitcher />
-          <button className="btn ghost" onClick={() => navigate("/manager")}>
+          <button
+            style={{
+              background: "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)",
+              color: "#fff",
+              fontWeight: 700,
+              padding: "10px 22px",
+              borderRadius: "999px",
+              border: "none",
+              boxShadow: "0 2px 8px rgba(34,197,94,0.10)",
+              letterSpacing: "0.5px",
+              fontSize: "15px",
+              transition: "background 0.2s, box-shadow 0.2s",
+              cursor: "pointer"
+            }}
+            onMouseOver={e => {
+              e.currentTarget.style.background = "linear-gradient(90deg, #16a34a 0%, #22c55e 100%)";
+              e.currentTarget.style.boxShadow = "0 4px 16px rgba(34,197,94,0.18)";
+            }}
+            onMouseOut={e => {
+              e.currentTarget.style.background = "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)";
+              e.currentTarget.style.boxShadow = "0 2px 8px rgba(34,197,94,0.10)";
+            }}
+            onClick={() => navigate("/manager")}
+          >
             {t("nav.dashboard")}
           </button>
-          <button className="btn" onClick={() => navigate("/plots")}>
+          <button
+            style={{
+              background: "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)",
+              color: "#fff",
+              fontWeight: 700,
+              padding: "10px 22px",
+              borderRadius: "999px",
+              border: "none",
+              boxShadow: "0 2px 8px rgba(34,197,94,0.10)",
+              letterSpacing: "0.5px",
+              fontSize: "15px",
+              transition: "background 0.2s, box-shadow 0.2s",
+              cursor: "pointer"
+            }}
+            onMouseOver={e => {
+              e.currentTarget.style.background = "linear-gradient(90deg, #16a34a 0%, #22c55e 100%)";
+              e.currentTarget.style.boxShadow = "0 4px 16px rgba(34,197,94,0.18)";
+            }}
+            onMouseOut={e => {
+              e.currentTarget.style.background = "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)";
+              e.currentTarget.style.boxShadow = "0 2px 8px rgba(34,197,94,0.10)";
+            }}
+            onClick={() => navigate("/plots")}
+          >
             {t("plots.edit.backList")}
           </button>
         </div>

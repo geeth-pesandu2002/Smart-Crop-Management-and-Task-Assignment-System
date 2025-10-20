@@ -1,3 +1,220 @@
+/* Field Reports Header Modernization */
+.field-reports-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  background: rgba(255,255,255,0.7);
+  border-radius: 1.5rem;
+  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.07);
+  padding: 1.2rem 2rem 1.2rem 2.5rem;
+  position: relative;
+}
+
+.field-reports-header .field-reports-title {
+  position: absolute;
+  left: 2.5rem;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #222;
+  letter-spacing: 0.01em;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.field-reports-header .field-reports-search {
+  flex: 1 1 320px;
+  max-width: 340px;
+  margin-left: 8rem;
+}
+
+.field-reports-header input[type="text"] {
+  width: 100%;
+  padding: 0.7rem 1.2rem;
+  border: 1.5px solid #d0e6d7;
+  border-radius: 1.2rem;
+  font-size: 1.1rem;
+  background: #f8fcfa;
+  transition: border 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 4px 0 rgba(0,0,0,0.04);
+}
+.field-reports-header input[type="text"]:focus {
+  border: 1.5px solid #4ecb71;
+  outline: none;
+  box-shadow: 0 2px 8px 0 rgba(76,203,113,0.08);
+}
+
+.field-reports-header .field-reports-pagination {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #222;
+}
+
+.field-reports-header .field-reports-pagination-btn {
+  background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+  color: #fff;
+  border: none;
+  border-radius: 2rem;
+  padding: 0.5rem 1.3rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s, box-shadow 0.18s, transform 0.13s;
+  box-shadow: 0 1px 4px 0 rgba(67,233,123,0.08);
+}
+.field-reports-header .field-reports-pagination-btn:hover {
+  background: linear-gradient(90deg, #38f9d7 0%, #43e97b 100%);
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 4px 16px 0 rgba(67,233,123,0.13);
+}
+
+.field-reports-header .dashboard-btn {
+  margin-left: 1.2rem;
+  background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+  color: #fff;
+  border: none;
+  border-radius: 2rem;
+  padding: 0.6rem 1.7rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s, box-shadow 0.18s, transform 0.13s;
+  box-shadow: 0 2px 8px 0 rgba(67,233,123,0.13);
+  letter-spacing: 0.01em;
+}
+.field-reports-header .dashboard-btn:hover {
+  background: linear-gradient(90deg, #38f9d7 0%, #43e97b 100%);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 6px 24px 0 rgba(67,233,123,0.18);
+}
+/* Field Reports Page Modernization */
+.field-reports-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(390px, 1fr));
+  margin-top: 10px;
+}
+.field-report-card {
+  background: linear-gradient(135deg, #f8fafc 80%, #e0fbe6 100%);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(22,163,74,0.10), 0 1.5px 8px rgba(34,197,94,0.07);
+  border: 1.5px solid #e0fbe6;
+  padding: 22px 24px 18px 24px;
+  transition: box-shadow 0.18s, transform 0.14s;
+  position: relative;
+  cursor: pointer;
+}
+.field-report-card:hover {
+  box-shadow: 0 16px 48px rgba(22,163,74,0.16), 0 2px 12px rgba(34,197,94,0.10);
+  transform: translateY(-2px) scale(1.01);
+}
+.field-report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.field-report-title {
+  font-size: 1.18rem;
+  font-weight: 700;
+  color: #166534;
+  margin: 0;
+}
+.field-report-date {
+  font-size: 0.98rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+.field-report-meta {
+  color: #475569;
+  font-size: 0.98rem;
+  margin-bottom: 2px;
+}
+.field-report-description {
+  margin-top: 10px;
+  color: #111827;
+  font-size: 1.04rem;
+}
+.field-report-photo {
+  margin-top: 12px;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(22,163,74,0.08);
+}
+.field-report-photo img {
+  width: 100%;
+  max-height: 320px;
+  object-fit: cover;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: filter 0.18s;
+}
+.field-report-photo img:hover {
+  filter: brightness(0.95) saturate(1.1);
+}
+.field-report-audio {
+  margin-top: 10px;
+}
+.field-report-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.field-report-action-message {
+  color: #16a34a;
+  font-weight: 600;
+  font-size: 1.01rem;
+}
+/* Resource Management Charts Styling */
+.card {
+  background: linear-gradient(135deg, #f8fafc 80%, #e0fbe6 100%);
+  border-radius: 22px;
+  box-shadow: 0 8px 32px rgba(22,163,74,0.10), 0 1.5px 8px rgba(34,197,94,0.07);
+  border: 1.5px solid #e0fbe6;
+  padding: 24px 28px 18px 28px;
+  margin-bottom: 12px;
+  transition: box-shadow 0.18s;
+}
+.card:hover {
+  box-shadow: 0 12px 40px rgba(22,163,74,0.16), 0 2px 12px rgba(34,197,94,0.10);
+}
+.card h3 {
+  font-size: 1.32rem;
+  font-weight: 800;
+  margin-bottom: 18px;
+  color: #0f172a;
+  letter-spacing: 0.01em;
+}
+.recharts-wrapper {
+  filter: drop-shadow(0 2px 12px rgba(34,197,94,0.07));
+  border-radius: 18px;
+  background: rgba(255,255,255,0.92);
+  padding: 8px 0 0 0;
+}
+.recharts-cartesian-axis-tick tspan {
+  font-size: 1.01em;
+  fill: #475569;
+}
+.recharts-legend-item-text {
+  font-weight: 600;
+  font-size: 1.01em;
+}
+.recharts-tooltip-wrapper {
+  border-radius: 10px !important;
+  box-shadow: 0 4px 16px rgba(22,163,74,0.13) !important;
+  background: #fff !important;
+  border: 1px solid #e0fbe6 !important;
+}
+.recharts-pie-label-text {
+  font-size: 1.01em;
+  font-weight: 600;
+  fill: #166534;
+}
 .kpi-card a, .kpi-card a:visited, .kpi-card .p, .kpi-card div, .kpi-card span {
   text-decoration: none !important;
   color: inherit;
