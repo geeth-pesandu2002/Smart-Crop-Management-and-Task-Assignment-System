@@ -24,18 +24,17 @@ export default function FieldReports() {
   // local map to track action taken per report (client-side only)
   const [actionTaken, setActionTaken] = useState({});
 
-  const [q, setQ] = useState(""); // input value
-  const [search, setSearch] = useState(""); // actual search trigger
+  const [selectedField, setSelectedField] = useState(""); // selected field for filtering
   const [page, setPage] = useState(1);
   const LIMIT = 8;
-  const searchInputRef = useRef();
+  // ...existing code...
 
-  useEffect(() => { refresh(); }, [page, search]);
+  useEffect(() => { refresh(); }, [page, selectedField]);
   async function refresh() {
     setLoading(true); setErr("");
     try {
       const params = { page, limit: LIMIT };
-      if (search) params.q = search;
+      if (selectedField) params.field = selectedField;
       const res = await api.get('/reports', { params });
       // axios returns a response object; backend currently returns an array of reports
       const data = res && res.data ? res.data : res;
@@ -76,48 +75,21 @@ export default function FieldReports() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <h2 style={{ margin: 0 }}>{L('Field Reports', 'ක්ෂේත්‍ර වාර්තා')}</h2>
         <div style={{ display: 'flex', gap: 8 }}>
-          <input
+          {/* Dropdown for filtering by field name */}
+          <select
             className="input"
-            ref={searchInputRef}
-            placeholder={L('Search by field, reporter, type...', 'ක්ෂේත්‍රය, වාර්තාකරු, වර්ගය අනුව සොයන්න...')}
-            value={q}
-            onChange={e => setQ(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === 'Enter') {
-                setPage(1);
-                setSearch(q);
-              }
-            }}
-          />
-          <button
-            className="btn"
-            style={{
-              background: "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)",
-              color: "#fff",
-              fontWeight: 700,
-              padding: "10px 22px",
-              borderRadius: "999px",
-              border: "none",
-              boxShadow: "0 2px 8px rgba(34,197,94,0.10)",
-              letterSpacing: "0.5px",
-              fontSize: "15px",
-              transition: "background 0.2s, box-shadow 0.2s",
-              cursor: "pointer"
-            }}
-            onMouseOver={e => {
-              e.currentTarget.style.background = "linear-gradient(90deg, #16a34a 0%, #22c55e 100%)";
-              e.currentTarget.style.boxShadow = "0 4px 16px rgba(34,197,94,0.18)";
-            }}
-            onMouseOut={e => {
-              e.currentTarget.style.background = "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)";
-              e.currentTarget.style.boxShadow = "0 2px 8px rgba(34,197,94,0.10)";
-            }}
-            onClick={() => {
+            value={selectedField}
+            onChange={e => {
               setPage(1);
-              setSearch(q);
-              searchInputRef.current && searchInputRef.current.blur();
+              setSelectedField(e.target.value);
             }}
-          >{L('Search', 'සොයන්න')}</button>
+            style={{ minWidth: 180 }}
+          >
+            <option value="">{L('All Fields', 'සියලු ක්ෂේත්‍ර')}</option>
+            {[...new Set(rows.map(r => r.field).filter(Boolean))].map(fieldName => (
+              <option key={fieldName} value={fieldName}>{fieldName}</option>
+            ))}
+          </select>
           <PageControls page={page} setPage={setPage} pages={pages} />
           <Link to="/manager">
             <button
@@ -155,44 +127,48 @@ export default function FieldReports() {
       </div>
 
       <div className="field-reports-grid">
-        {rows.map((r) => {
-          const photo = r.photoUrl ? buildAbsoluteUrl(r.photoUrl) : null;
-          const voice = r.voiceUrl ? buildAbsoluteUrl(r.voiceUrl) : null;
-          return (
-            <div key={r._id} className="field-report-card">
-              <div className="field-report-header">
-                <div className="field-report-title">{r.issueType || 'Issue'}</div>
-                <div className="field-report-date">{formatDateTime(r.date)}</div>
-              </div>
-              <div className="field-report-meta">
-                {r.userCode ? `${r.userCode} · ` : ''}{r.userName || 'Unknown'}
-                <span style={{ marginLeft: 10 }}>Plot: {r.field || '-'}</span>
-              </div>
-              {r.description ? <div className="field-report-description">{r.description}</div> : null}
-              {photo ? (
-                <div className="field-report-photo">
-                  <img onClick={() => openLightbox(photo)} src={photo} alt="report" />
+        {rows
+          .filter(r => !selectedField || r.field === selectedField)
+          .map((r) => {
+            const photo = r.photoUrl ? buildAbsoluteUrl(r.photoUrl) : null;
+            const voice = r.voiceUrl ? buildAbsoluteUrl(r.voiceUrl) : null;
+            return (
+              <div key={r._id} className="field-report-card">
+                <div className="field-report-header">
+                  <div className="field-report-title">{r.issueType || 'Issue'}</div>
+                  <div className="field-report-date">{formatDateTime(r.date)}</div>
                 </div>
-              ) : null}
-              {voice ? (
-                <div className="field-report-audio">
-                  <audio controls src={voice} style={{ width: '100%' }} />
+                <div className="field-report-meta">
+                  {r.userCode ? `${r.userCode} · ` : ''}{r.userName || 'Unknown'}
+                  <span style={{ marginLeft: 10 }}>Plot: {r.field || '-'}</span>
                 </div>
-              ) : null}
-              <div className="field-report-actions">
-                <button
-                  className="btn"
-                  onClick={() => {
-                    navigate(`/tasks?fromReport=${r._id}`);
-                    setActionTaken(prev => ({ ...prev, [r._id]: 'Task created' }));
-                    setTimeout(() => setActionTaken(prev => ({ ...prev, [r._id]: null })), 4000);
-                  }}
-                >{L('Create Task', 'කාර්යයක් සාදන්න')}</button>
-                {actionTaken[r._id] ? <div className="field-report-action-message">{actionTaken[r._id]}</div> : null}
+                <div className="field-report-description" style={{ minHeight: 32 }}>
+                  {r.description || ''}
+                </div>
+                {photo ? (
+                  <div className="field-report-photo">
+                    <img onClick={() => openLightbox(photo)} src={photo} alt="report" />
+                  </div>
+                ) : null}
+                {voice ? (
+                  <div className="field-report-audio">
+                    <audio controls src={voice} style={{ width: '100%' }} />
+                  </div>
+                ) : null}
+                <div className="field-report-actions">
+                  <button
+                    className="btn"
+                    onClick={() => {
+                      navigate(`/tasks?fromReport=${r._id}`);
+                      setActionTaken(prev => ({ ...prev, [r._id]: 'Task created' }));
+                      setTimeout(() => setActionTaken(prev => ({ ...prev, [r._id]: null })), 4000);
+                    }}
+                  >{L('Create Task', 'කාර්යයක් සාදන්න')}</button>
+                  {actionTaken[r._id] ? <div className="field-report-action-message">{actionTaken[r._id]}</div> : null}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
       </div>
     </div>
   );

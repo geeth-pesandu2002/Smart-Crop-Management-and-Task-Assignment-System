@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import api, { getPlots } from "../api.js";
@@ -149,6 +148,7 @@ export default function Dashboard() {
           <NavLink to="/reports" label="Reports" active={location.pathname.startsWith("/reports")} />
           <NavLink to="/reports/field" label="Field Reports" active={location.pathname.startsWith("/reports/field")} />
           <NavLink to="/settings" label="Settings" active={location.pathname.startsWith("/settings")} />
+          <NavLink to="/status" label="Status" active={location.pathname.startsWith("/status")} />
 
           <div style={{ marginTop: "auto", display: "grid", gap: 8 }}>
             <Link to="/settings" className="btn outline">Help</Link>
@@ -173,7 +173,7 @@ export default function Dashboard() {
           <div style={{ flex: 1, overflow: 'auto', padding: '0 24px 24px 24px' }}>
             {/* KPI row */}
             <section className="kpi-row" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
-              <KpiCard title="Crop Status" big="95% Healthy" sub="Overall health of active crops" action="View Details" />
+              <KpiCard title="Crop Status" big="95% Healthy" sub="Overall health of active crops" action="View Details" to="/status" />
               <KpiCard title="Soil Condition Alerts" big={`${alerts.length} Active Alerts`} sub="Immediate issues from sensors" action="View Details" />
               <KpiCard
                 title="Task Summary"

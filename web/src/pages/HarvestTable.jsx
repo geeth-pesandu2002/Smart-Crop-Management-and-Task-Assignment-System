@@ -118,7 +118,11 @@ export default function HarvestTable({ plot, onChanged, onAdd, onDelete }) {
                     <button
                       type="button"
                       className="btn sm ghost"
-                      onClick={() => onDelete(h._id)}
+                      onClick={() => {
+                        if (window.confirm("Are you sure you want to delete this harvest record?")) {
+                          onDelete(h._id);
+                        }
+                      }}
                     >
                       Delete
                     </button>

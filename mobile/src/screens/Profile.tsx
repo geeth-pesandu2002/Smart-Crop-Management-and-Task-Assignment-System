@@ -1,24 +1,133 @@
-import React from 'react';
-import { View, Text, Pressable } from 'react-native';
-import { setMeta } from '../db/meta';
+import React, { useEffect, useState } from 'react';
+import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native';
+import { getMeta, setMeta } from '../db/meta';
+const fields = [
+  { key: 'user_id', label: 'පරිශීලක අංකය' },
+  { key: 'user_name', label: 'නම' },
+  { key: 'user_role', label: 'භූමිකාව' },
+  { key: 'user_phone', label: 'දුරකථන අංකය' },
+  { key: 'user_gender', label: 'ස්ත්‍රී/පුරුෂ භාවය' },
+  { key: 'user_address', label: 'ලිපිනය' },
+  { key: 'user_joined', label: 'එක්වූ දිනය' },
+];
+
+function formatDate(val?: string) {
+  if (!val) return '';
+  const d = new Date(val);
+  if (isNaN(d.getTime())) return val;
+  return d.toLocaleDateString();
+}
 
 export default function Profile({ navigation }: any) {
+  const [user, setUser] = useState<any>({});
+
+  useEffect(() => {
+    // Load user info from meta
+    const info: any = {};
+    for (const f of fields) {
+      info[f.key] = getMeta(f.key) || '';
+    }
+    setUser(info);
+  }, []);
+
   function logout() {
     setMeta('auth_token', null);
     setMeta('user_id', null);
     setMeta('user_name', null);
     setMeta('user_role', null);
+    setMeta('user_email', null);
+    setMeta('user_phone', null);
+    setMeta('user_gender', null);
+    setMeta('user_address', null);
+    setMeta('user_joined', null);
     navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
   }
 
   return (
-    <View style={{ flex: 1, padding: 16 }}>
-      <Text style={{ fontSize: 18, fontWeight: '700', marginBottom: 12 }}>පැරෝල්</Text>
-      <Text style={{ marginBottom: 12 }}>මෙහි ඔබගේ පරිශීලක තොරතුරු, සැකසුම් හා පිටවීමේ ක්‍රියාකාරකම් දැක්විය හැකිය.</Text>
-
-      <Pressable onPress={logout} style={({ pressed }) => ({ backgroundColor: '#5aa15a', padding: 12, borderRadius: 10, opacity: pressed ? 0.8 : 1 })}>
-        <Text style={{ color: 'white', fontWeight: '700' }}>ඉවත්වෙන්න</Text>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <View style={styles.profileCard}>
+        <View style={styles.avatarCircle}>
+          <Text style={styles.avatarText}>{user.user_name?.[0]?.toUpperCase() || '?'}</Text>
+        </View>
+  <Text style={styles.name}>{user.user_name || 'නම නොමැත'}</Text>
+  <Text style={styles.role}>{user.user_role ? (user.user_role === 'staff' ? 'කාර්ය මණ්ඩලය' : user.user_role === 'manager' ? ' කළමනාකරු' : user.user_role === 'supervisor' ? 'අධීක්ෂක' : user.user_role) : ''}</Text>
+      </View>
+      <View style={styles.infoSection}>
+        {fields.map(f => (
+          f.key !== 'user_name' && f.key !== 'user_role' && f.key !== 'user_email' && (
+            <View key={f.key} style={styles.infoRow}>
+              <Text style={styles.infoLabel}>{f.label}</Text>
+              <Text style={styles.infoValue}>
+                {(() => {
+                  const val = user[f.key];
+                  if (f.key === 'user_joined') {
+                    return val ? formatDate(val) : 'නොමැත';
+                  }
+                  return val && val !== '-' ? val : 'නොමැත';
+                })()}
+              </Text>
+            </View>
+          )
+        ))}
+      </View>
+      <Pressable onPress={logout} style={({ pressed }) => [styles.logoutBtn, pressed && { opacity: 0.8 }] }>
+        <Text style={styles.logoutText}>ඉවත් වන්න</Text>
       </Pressable>
-    </View>
+    </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#f6f8fa' },
+  content: { padding: 24, alignItems: 'center' },
+  profileCard: {
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 24,
+    marginBottom: 24,
+    width: '100%',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  avatarCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#e0e7ef',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  avatarText: { fontSize: 32, fontWeight: '700', color: '#2563eb' },
+  name: { fontSize: 22, fontWeight: '700', marginBottom: 4 },
+  role: { fontSize: 16, color: '#5aa15a', marginBottom: 8 },
+  infoSection: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    width: '100%',
+    marginBottom: 24,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  infoLabel: { fontWeight: '600', color: '#555' },
+  infoValue: { color: '#222' },
+  logoutBtn: {
+    backgroundColor: '#5aa15a',
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 10,
+    alignSelf: 'center',
+    marginTop: 12,
+  },
+  logoutText: { color: 'white', fontWeight: '700', fontSize: 16 },
+});

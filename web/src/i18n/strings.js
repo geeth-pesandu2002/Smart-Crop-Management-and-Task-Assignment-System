@@ -1,6 +1,20 @@
 // src/i18n/strings.js
 const STRINGS = {
   en: {
+    status: {
+      title: "Crop Health Status",
+      sub: "View health status of crops for each plot",
+      overallHealth: "Overall Health",
+      healthy: "Healthy",
+      byPlot: "Crop Health by Plot",
+      byPlotSub: "Calculated as (Qty discarded / Qty harvested) × 100%",
+      fieldName: "Field Name",
+      cropType: "Crop Type",
+      health: "Health (%)",
+      details: "Details",
+      viewEdit: "View/Edit",
+      noPlots: "No plots found"
+    },
       brand: "Smart Crop Management and Task Assignment System",
       settings: {
   delete: "Delete",
@@ -222,6 +236,20 @@ const STRINGS = {
   },
 
   si: {
+    status: {
+      title: "බෝග සෞඛ්‍ය තත්ත්වය",
+      sub: "සෑම බිම් කොටසකම බෝග සෞඛ්‍ය තත්ත්වය බලන්න",
+      overallHealth: "මුළු සෞඛ්‍යය",
+      healthy: "සෞඛ්‍යවත්",
+      byPlot: "බිම් කොටස අනුව බෝග සෞඛ්‍යය",
+      byPlotSub: "ගණනය කිරීම: (ප්‍රතික්ෂේප ප්‍රමාණය / අස්වැන්න ප්‍රමාණය) × 100%",
+      fieldName: "ක්ෂේත්‍ර නාමය",
+      cropType: "බෝග වර්ගය",
+      health: "සෞඛ්‍යය (%)",
+      details: "විස්තර",
+      viewEdit: "බලන්න/සංස්කරණය කරන්න",
+      noPlots: "බිම් කොටස් නොමැත"
+    },
     brand: "දක්ෂ බෝග කළමනාකරණය සහ කාර්ය බෙදාහැරීමේ පද්ධතිය",
     settings: {
       title: "සැකසුම් සහ සේවකයින්",

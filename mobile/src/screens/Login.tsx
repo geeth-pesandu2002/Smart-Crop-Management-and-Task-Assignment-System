@@ -62,9 +62,10 @@ export default function Login() {
         data = await api.post('/auth/staff-login', payload);
       }
 
-      const token = data?.token;
-      const user = data?.user || {};
-      if (!token) throw new Error('Token සෙවීම අසාර්ථක විය');
+  const token = data?.token;
+  const user = data?.user || {};
+  console.log('LOGIN USER OBJECT:', user); // DEBUG: log user object
+  if (!token) throw new Error('Token සෙවීම අසාර්ථක විය');
 
       // If switching users, clear local tasks so old user's items don't show
       const prevUserId = getMeta('user_id');
@@ -77,13 +78,32 @@ export default function Login() {
 
       setMeta('auth_token', token);
       setMeta('last_login_id', raw);
-      if (user._id) setMeta('user_id', String(user._id));
-      if (user.name) setMeta('user_name', String(user.name));
-      if (user.role) setMeta('user_role', String(user.role));
+      // Save all user info fields for profile page
+      setMeta('user_id', user.userId || user._id || '');
+      setMeta('user_name', user.name || '');
+      setMeta('user_role', user.role || '');
+      setMeta('user_email', user.email || '');
+      setMeta('user_phone', user.phone || '');
+      setMeta('user_gender', user.gender || '');
+      setMeta('user_address', user.address || '');
+      // joinedAt may be Date object, string, or undefined
+      if (user.joinedAt) {
+        let joined = user.joinedAt;
+        if (typeof joined === 'object' && joined instanceof Date) {
+          joined = joined.toISOString().slice(0, 10);
+        } else if (typeof joined === 'string' && joined.length > 10) {
+          // Try to format as YYYY-MM-DD
+          const d = new Date(joined);
+          joined = isNaN(d.getTime()) ? joined : d.toISOString().slice(0, 10);
+        }
+        setMeta('user_joined', joined);
+      } else {
+        setMeta('user_joined', '');
+      }
 
-  await pullMineFromServer();
-  // Reset to the tab navigator (MainTabs) so the Tasks tab is shown after login
-  nav.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
+      await pullMineFromServer();
+      // Reset to the tab navigator (MainTabs) so the Tasks tab is shown after login
+      nav.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
     } catch (e: any) {
       const msg =
         e?.response?.data?.error ||

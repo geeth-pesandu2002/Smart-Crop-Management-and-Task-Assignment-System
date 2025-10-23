@@ -205,12 +205,13 @@ router.delete('/:id/harvests/:hid', requireAuth, async (req, res) => {
       console.error(`[DELETE HARVEST] Plot not found: ${id}`);
       return res.status(404).json({ error: 'Plot not found', plotId: id });
     }
-    const h = plot.harvests.id(hid);
-    if (!h) {
-      console.error(`[DELETE HARVEST] Harvest not found: plotId=${id}, harvestId=${hid}`);
-      return res.status(404).json({ error: 'Harvest not found', plotId: id, harvestId: hid });
-    }
-    h.remove();
+      const h = plot.harvests.id(hid);
+      if (!h) {
+        console.error(`[DELETE HARVEST] Harvest not found: plotId=${id}, harvestId=${hid}`);
+        return res.status(404).json({ error: 'Harvest not found', plotId: id, harvestId: hid });
+      }
+      // Remove harvest by filtering array
+      plot.harvests = plot.harvests.filter(hv => hv._id.toString() !== hid);
     try {
       await plot.save();
     } catch (saveErr) {
