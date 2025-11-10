@@ -24,6 +24,7 @@ const taskSchema = new mongoose.Schema({
   status:   { type: String, enum: ['pending','in_progress','blocked','completed'], default: 'pending' },
   priority: { type: String, enum: ['low','normal','high'], default: 'normal' },
   dueDate:  Date,
+  startDate: { type: Date },
 
   // attachments
   voiceUrl: { type: String, default: '' },

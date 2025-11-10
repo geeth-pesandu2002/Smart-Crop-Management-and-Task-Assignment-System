@@ -5,7 +5,7 @@ import { isManager, isAuthed, clearAuth } from "../auth";
 
 export default function ManagerHome() {
   const nav = useNavigate();
-  const [form, setForm] = useState({ title:'', description:'', assignedTo:'', priority:'normal', dueDate:'' });
+  const [form, setForm] = useState({ title:'', description:'', assignedTo:'', priority:'normal', dueDate:'', startDate:'' });
   const [msg, setMsg] = useState('');
 
   useEffect(() => {
@@ -16,9 +16,9 @@ export default function ManagerHome() {
     e.preventDefault();
     setMsg('');
     try {
-      const { data } = await api.post('/tasks', form);
+  const { data } = await api.post('/tasks', form);
       setMsg('Task created: ' + data._id);
-      setForm({ title:'', description:'', assignedTo:'', priority:'normal', dueDate:'' });
+  setForm({ title:'', description:'', assignedTo:'', priority:'normal', dueDate:'', startDate:'' });
     } catch (e) {
       setMsg(e?.response?.data?.error || 'Failed to create task');
     }
@@ -45,7 +45,8 @@ export default function ManagerHome() {
           <option value="normal">normal</option>
           <option value="high">high</option>
         </select>
-        <input type="date" value={form.dueDate} onChange={e=>setForm({...form, dueDate:e.target.value})}/>
+  <input type="date" value={form.dueDate} onChange={e=>setForm({...form, dueDate:e.target.value})}/>
+  <input type="date" value={form.startDate} onChange={e=>setForm({...form, startDate:e.target.value})} placeholder="Start Date" />
         <button type="submit">Create Task</button>
       </form>
       {msg && <p style={{marginTop:10}}>{msg}</p>}

@@ -72,7 +72,7 @@ router.post('/', auth(['manager']), async (req, res) => {
     const {
       title, description, assignedTo, groupId,
       priority = 'normal', dueDate, plotId, voiceUrl = '',
-      sharedGroupTask = true
+      sharedGroupTask = true, startDate
     } = req.body || {};
 
     if (!title) return res.status(400).json({ error: 'title required' });
@@ -83,7 +83,7 @@ router.post('/', auth(['manager']), async (req, res) => {
     // individual
     if (assignedTo && !groupId) {
       const t = await Task.create({
-        title, description, assignedTo, priority, dueDate, plotId, voiceUrl, createdBy: req.user._id
+        title, description, assignedTo, priority, dueDate, plotId, voiceUrl, createdBy: req.user._id, startDate
       });
       return res.json(t);
     }
@@ -94,12 +94,12 @@ router.post('/', auth(['manager']), async (req, res) => {
 
     if (sharedGroupTask) {
       const t = await Task.create({
-        title, description, groupId, priority, dueDate, plotId, voiceUrl, createdBy: req.user._id
+        title, description, groupId, priority, dueDate, plotId, voiceUrl, createdBy: req.user._id, startDate
       });
       return res.json(t);
     } else {
       const docs = group.members.map(m => ({
-        title, description, assignedTo: m, priority, dueDate, plotId, voiceUrl, createdBy: req.user._id
+        title, description, assignedTo: m, priority, dueDate, plotId, voiceUrl, createdBy: req.user._id, startDate
       }));
       const created = await Task.insertMany(docs);
       return res.json(created);
@@ -191,7 +191,7 @@ router.patch('/:id/status', auth(), async (req, res) => {
 
 /* ---------------- edit task (manager) ---------------- */
 router.put('/:id', auth(['manager']), async (req, res) => {
-  const allowed = ['title','description','priority','dueDate','plotId','assignedTo','groupId','voiceUrl'];
+  const allowed = ['title','description','priority','dueDate','plotId','assignedTo','groupId','voiceUrl','startDate'];
   const patch = {};
   for (const k of allowed) if (k in req.body) patch[k] = req.body[k];
 

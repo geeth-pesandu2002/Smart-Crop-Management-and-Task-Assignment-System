@@ -74,6 +74,23 @@ export default function Settings() {
     [staff, page]
   );
 
+  // Assigned tasks for each staff member
+  const [staffTasks, setStaffTasks] = useState({});
+  useEffect(() => {
+    (async () => {
+      const tasksByStaff = {};
+      for (const u of pagedStaff) {
+        try {
+          const res = await api.get(`/tasks?staff=${u._id}&limit=5&sort=createdAt:desc`);
+          tasksByStaff[u._id] = res.data.items || [];
+        } catch {
+          tasksByStaff[u._id] = [];
+        }
+      }
+      setStaffTasks(tasksByStaff);
+    })();
+  }, [pagedStaff]);
+
   // Add member modal
   const [showAdd, setShowAdd] = useState(false);
   const [creating, setCreating] = useState({
@@ -362,6 +379,7 @@ export default function Settings() {
                     <th style={{ padding: "8px 6px" }}>{t("settings.phone", "Phone")}</th>
                     <th style={{ padding: "8px 6px" }}>{t("settings.role", "Role")}</th>
                     <th style={{ padding: "8px 6px" }}>{t("settings.status", "Status")}</th>
+                    <th style={{ padding: "8px 6px" }}>Assigned Tasks</th>
                     <th style={{ padding: "8px 6px" }} />
                   </tr>
                 </thead>
@@ -376,6 +394,22 @@ export default function Settings() {
                         <td style={{ padding: "8px 6px" }}>{u.role}</td>
                         <td style={{ padding: "8px 6px" }}>
                           <span style={pill(status)}>{status === "active" ? t("settings.active", "Active") : t("settings.onLeave", "On leave")}</span>
+                        </td>
+                        <td style={{ padding: "8px 6px", minWidth: 180 }}>
+                          {Array.isArray(staffTasks[u._id]) && staffTasks[u._id].length > 0 ? (
+                            <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
+                              {staffTasks[u._id].map(task => (
+                                <li key={task._id} style={{ marginBottom: 4 }}>
+                                  <span style={{ fontWeight: 500 }}>{task.title}</span>
+                                  {task.startDate && (
+                                    <span style={{ color: '#555', marginLeft: 8, fontSize: 12 }}>
+                                      (Start: {new Date(task.startDate).toLocaleDateString()})
+                                    </span>
+                                  )}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : <span style={{ color: '#888' }}>—</span>}
                         </td>
                         <td style={{ padding: "8px 6px", display: "flex", gap: 6 }}>
                           <button style={tinyBtn} onClick={() => openDetail(u)}>{t("settings.viewDetails", "View details")}</button>

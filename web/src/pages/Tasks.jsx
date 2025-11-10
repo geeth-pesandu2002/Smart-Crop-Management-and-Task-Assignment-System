@@ -17,11 +17,12 @@ export default function Tasks() {
   // form state
   const [mode, setMode] = useState("individual");
   const [staff, setStaff] = useState([]);
+  const [availableStaff, setAvailableStaff] = useState([]);
   const [groups, setGroups] = useState([]);
   const [plots, setPlots] = useState([]);
   const [form, setForm] = useState({
     title: "", description: "", assignedTo: "", groupId: "",
-    priority: "normal", dueDate: "", plotId: "",
+    priority: "normal", dueDate: "", startDate: "", plotId: "",
     sharedGroupTask: true, voiceUrl: ""
   });
   const [voiceFile, setVoiceFile] = useState(null);
@@ -112,6 +113,24 @@ export default function Tasks() {
     })();
   }, [t]);
 
+  // Filter staff based on leave for selected startDate
+  useEffect(() => {
+    async function fetchAvailableStaff() {
+      if (!form.startDate) {
+        setAvailableStaff(staff);
+        return;
+      }
+      try {
+        const res = await api.get(`/leaves/active?date=${form.startDate}`);
+        const leaveIds = (res.data || []).map(l => l.user?._id || l.user);
+        setAvailableStaff(staff.filter(s => !leaveIds.includes(s._id)));
+      } catch {
+        setAvailableStaff(staff);
+      }
+    }
+    fetchAvailableStaff();
+  }, [form.startDate, staff]);
+
   // --- build query params for tasks list ---
   const buildQuery = useCallback(() => {
     const q = new URLSearchParams();
@@ -180,6 +199,7 @@ export default function Tasks() {
       description: form.description,
       priority: form.priority,
       dueDate: form.dueDate || undefined,
+      startDate: form.startDate || undefined,
       plotId: form.plotId || undefined,
       voiceUrl: form.voiceUrl || ""
     };
@@ -198,7 +218,7 @@ export default function Tasks() {
       setMsg(t("tasks.msg.created"));
       setForm({
         title: "", description: "", assignedTo: "", groupId: "",
-        priority: "normal", dueDate: "", plotId: "",
+        priority: "normal", dueDate: "", startDate: "", plotId: "",
         sharedGroupTask: true, voiceUrl: ""
       });
       setVoiceFile(null);
@@ -371,7 +391,7 @@ export default function Tasks() {
                   onChange={(ev) => setForm({ ...form, assignedTo: ev.target.value })}
                 >
                   <option value="">{t("tasks.form.selectStaff")}</option>
-                  {staff.map((s) => (
+                  {availableStaff.map((s) => (
                     <option key={s._id} value={s._id}>
                       {s.name}{s.email ? ` (${s.email})` : ""}
                     </option>
@@ -428,6 +448,16 @@ export default function Tasks() {
                   style={{ width: '100%', boxSizing: 'border-box' }}
                   value={form.dueDate}
                   onChange={(ev) => setForm({ ...form, dueDate: ev.target.value })}
+                />
+              </div>
+              <div className="field" style={{ marginBottom: 16 }}>
+                <label>Start Date</label>
+                <input
+                  className="input"
+                  type="date"
+                  style={{ width: '100%', boxSizing: 'border-box' }}
+                  value={form.startDate}
+                  onChange={(ev) => setForm({ ...form, startDate: ev.target.value })}
                 />
               </div>
               <div className="field" style={{ marginBottom: 16 }}>
@@ -526,6 +556,7 @@ export default function Tasks() {
                 <th>{t("tasks.table.head.plot")}</th>
                 <th>{t("tasks.table.head.priority")}</th>
                 <th>{t("tasks.table.head.status")}</th>
+                <th>Start Date</th>
                 <th>{t("tasks.table.head.due")}</th>
                 <th style={{width:120}}>{t("tasks.comments.col") || "Comments"}</th>
               </tr>
@@ -558,6 +589,7 @@ export default function Tasks() {
                         <StatusBadge status={tk.status} />
                       )}
                     </td>
+                    <td>{tk.startDate ? new Date(tk.startDate).toLocaleDateString() : "-"}</td>
                     <td>{tk.dueDate ? new Date(tk.dueDate).toLocaleDateString() : "-"}</td>
                     <td>
                       <div style={{display:'flex', gap:8, alignItems:'center', flexWrap:'wrap'}}>

@@ -208,7 +208,7 @@ router.delete('/:id', auth(['manager']), async (req, res) => {
     await Group.updateMany({}, { $pull: { members: userObjId } });
 
     // Delete all tasks assigned to or created by the user
-    const Task = require('../models/Task');
+  const Task = require('../models/task');
     await Task.deleteMany({ $or: [ { assignedTo: userObjId }, { createdBy: userObjId } ] });
 
     // Delete all leaves for the user
