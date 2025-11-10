@@ -11,7 +11,7 @@ import {
 } from "../api.js";
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend
+  PieChart, Pie, Cell, Legend, BarChart, Bar
 } from "recharts";
 
 import { useLang } from "../i18n.jsx";
@@ -55,6 +55,8 @@ export default function Resources() {
   const [plots, setPlots] = useState([]);
   const [metrics, setMetrics] = useState(null);
   const [usages, setUsages] = useState([]);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
   const [loading, setLoading] = useState(true);
   const [year, setYear] = useState(new Date().getFullYear());
 
@@ -70,6 +72,17 @@ export default function Resources() {
     plantedAreaAcres: "",
     pesticideNames: "",
   });
+
+  // Update fieldName automatically when plotId changes
+  useEffect(() => {
+    if (!form.plotId) {
+      setForm(f => ({ ...f, fieldName: "" }));
+      return;
+    }
+    const selectedPlot = plots.find(p => p._id === form.plotId);
+    const name = selectedPlot?.name || selectedPlot?.plotName || selectedPlot?.title || selectedPlot?.fieldName || selectedPlot?.properties?.name || selectedPlot?.meta?.name || (selectedPlot?._id ? `Plot ${String(selectedPlot._id).slice(-4)}` : "");
+    setForm(f => ({ ...f, fieldName: name }));
+  }, [form.plotId, plots]);
   const [tab, setTab] = useState("fertilizer"); // fertilizer | seeds | pesticide
 
   // --- Real-time: Broadcast to other pages (Reports) when data changes
@@ -109,7 +122,13 @@ export default function Resources() {
 
   const submit = async (e) => {
     e.preventDefault();
-    const payload = { ...form, type: tab };
+    // Always set fieldName from selected plot for new entry
+    let fieldName = "";
+    if (form.plotId) {
+      const selectedPlot = plots.find(p => p._id === form.plotId);
+      fieldName = selectedPlot?.name || selectedPlot?.plotName || selectedPlot?.title || selectedPlot?.fieldName || selectedPlot?.properties?.name || selectedPlot?.meta?.name || (selectedPlot?._id ? `Plot ${String(selectedPlot._id).slice(-4)}` : "");
+    }
+    const payload = { ...form, type: tab, fieldName };
     if (!payload.plotId) return alert(L("Please choose a Plot", "කරුණාකර බිම් කොටසක් තෝරන්න"));
 
     await createResourceUsage(payload);
@@ -130,6 +149,7 @@ export default function Resources() {
     ]);
     setMetrics(metricsRes);
     setUsages(usageRes.items || []);
+    setPage(1); // Reset to first page after submit
 
     notifyChange();
   };
@@ -144,6 +164,7 @@ export default function Resources() {
     ]);
     setMetrics(metricsRes);
     setUsages(usageRes.items || []);
+    setPage(1); // Reset to first page after delete
 
     notifyChange();
   };
@@ -259,11 +280,11 @@ export default function Resources() {
         {/* 12-column layout; rows have safe gaps and overflow protections */}
         <form onSubmit={submit} className="form-grid">
           {/* Row 1: Plot (4) | Field (4) | Date (4) */}
-          <Field span={4} label={L("Plot", "බිම් කොටස")}>
+          <Field span={4} label={L("Plot", "බිම් කොටස")}> 
             <select
               className="select"
               value={form.plotId}
-              onChange={(e) => setForm({ ...form, plotId: e.target.value })}
+              onChange={(e) => setForm(f => ({ ...f, plotId: e.target.value }))}
             >
               <option value="">{L("Select plot…", "බිම් කොටස තෝරාගන්න…")}</option>
               {plots.map((p) => (
@@ -274,14 +295,7 @@ export default function Resources() {
             </select>
           </Field>
 
-          <Field span={4} label={L("Field Name", "ක්ෂේත්‍ර නාමය")}>
-            <input
-              className="input"
-              placeholder={L("e.g., Wheat field 1", "උදා: ගෝධුම් කෙත් 1")}
-              value={form.fieldName}
-              onChange={(e) => setForm({ ...form, fieldName: e.target.value })}
-            />
-          </Field>
+          {/* Removed Field Name textbox. Field name will be set from selected plot. */}
 
           <Field span={4} label={L("Date", "දිනය")}>
             <input
@@ -314,9 +328,10 @@ export default function Resources() {
             </>
           )}
 
+
           {tab === "seeds" && (
             <>
-              <Field span={4} label={L("Planted Area (acres)", "ස්ථාපිත ප්‍රමාණය (ඇකර්)")}>
+              <Field span={6} label={L("Planted Area (acres)", "ස්ථාපිත ප්‍රමාණය (ඇකර්)")}> 
                 <input
                   className="input"
                   type="number"
@@ -325,19 +340,22 @@ export default function Resources() {
                   onChange={(e) => setForm({ ...form, plantedAreaAcres: e.target.value })}
                 />
               </Field>
-              <Spacer span={8} />
+              <Spacer span={6} />
             </>
           )}
 
           {tab === "pesticide" && (
-            <Field span={12} label={L("Pesticide Name(s)", "කෘමිනාශක නාම(ය)")}>
-              <input
-                className="input"
-                placeholder={L("comma separated", "කොමාවෙන් වෙන්කරන්න")}
-                value={form.pesticideNames}
-                onChange={(e) => setForm({ ...form, pesticideNames: e.target.value })}
-              />
-            </Field>
+            <>
+              <Field span={6} label={L("Pesticide Name(s)", "කෘමිනාශක නාම(ය)")}> 
+                <input
+                  className="input"
+                  placeholder={L("comma separated", "කොමාවෙන් වෙන්කරන්න")}
+                  value={form.pesticideNames}
+                  onChange={(e) => setForm({ ...form, pesticideNames: e.target.value })}
+                />
+              </Field>
+              <Spacer span={6} />
+            </>
           )}
 
           {/* Row 3: Quantity (4) | Unit (4) | Cost (4) */}
@@ -352,18 +370,25 @@ export default function Resources() {
             />
           </Field>
 
-          <Field span={4} label={L("Unit", "ඒකකය")}>
+          <Field span={4} label={L("Unit", "ඒකකය")}> 
             <select
               className="select"
               value={form.quantityUnit}
               onChange={(e) => setForm({ ...form, quantityUnit: e.target.value })}
             >
-              <option value="kg">kg</option>
-              <option value="g">g</option>
-              <option value="L">L</option>
-              <option value="ml">ml</option>
-              <option value="seeds">{L("seeds", "බීජ")}</option>
-              <option value="plants">{L("plants", "රොප්පු")}</option>
+              {tab === "seeds" ? (
+                <>
+                  <option value="seeds">{L("seeds", "බීජ")}</option>
+                  <option value="plants">{L("plants", "රොප්පු")}</option>
+                </>
+              ) : (
+                <>
+                  <option value="kg">kg</option>
+                  <option value="g">g</option>
+                  <option value="L">L</option>
+                  <option value="ml">ml</option>
+                </>
+              )}
             </select>
           </Field>
 
@@ -431,11 +456,11 @@ export default function Resources() {
               </tr>
             </thead>
             <tbody>
-              {usages.map((u) => (
+              {usages.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE).map((u) => (
                 <tr key={u._id}>
                   <td>{dayjs(u.date).format("YYYY-MM-DD")}</td>
                   <td>{u.type}</td>
-                  <td>{u.fieldName || "—"}</td>
+                  <td>{u.fieldName || (plots.find(p => p._id === u.plotId)?.name || plots.find(p => p._id === u.plotId)?.plotName || plots.find(p => p._id === u.plotId)?.title || plots.find(p => p._id === u.plotId)?.fieldName) || "—"}</td>
                   <td>{u.quantity?.value} {u.quantity?.unit}</td>
                   <td>{money(u.cost)}</td>
                   <td>
@@ -453,31 +478,49 @@ export default function Resources() {
             </tbody>
           </table>
         </div>
+        {/* Pagination controls */}
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 16, marginTop: 16 }}>
+          <button
+            className="btn"
+            disabled={page === 1}
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+          >
+            {L("Prev", "පෙර")}
+          </button>
+          <span>{L("Page", "පිටුව")}: {page} / {Math.max(1, Math.ceil(usages.length / PAGE_SIZE))}</span>
+          <button
+            className="btn"
+            disabled={page >= Math.ceil(usages.length / PAGE_SIZE)}
+            onClick={() => setPage(p => Math.min(Math.ceil(usages.length / PAGE_SIZE), p + 1))}
+          >
+            {L("Next", "ඊළඟ")}
+          </button>
+        </div>
       </section>
 
       {/* Charts */}
       <section className="grid" style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 24 }}>
         <div className="card">
           <h3>{L("Monthly Resource Cost (YTD)", "මාසික වියදම් (මෙවැනි වර්ෂය)")}</h3>
-          <div style={{ height: 280 }}>
+          <div style={{ height: 420 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={monthlyChart}>
+              <BarChart data={monthlyChart}>
                 <XAxis dataKey="month" />
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey={KEY_FERT} strokeWidth={2} stroke={COLOR_MAP.fertilizer} dot={{ r: 4 }} />
-                <Line type="monotone" dataKey={KEY_PEST} strokeWidth={2} stroke={COLOR_MAP.pesticide} dot={{ r: 4 }} />
-                <Line type="monotone" dataKey={KEY_SEED} strokeWidth={2} stroke={COLOR_MAP.seeds} dot={{ r: 4 }} />
-                <Line type="monotone" dataKey={KEY_TOTAL} strokeWidth={2} stroke="#0ea5e9" dot={{ r: 4 }} />
-              </LineChart>
+                <Bar dataKey={KEY_FERT} fill={COLOR_MAP.fertilizer} name={KEY_FERT} />
+                <Bar dataKey={KEY_PEST} fill={COLOR_MAP.pesticide} name={KEY_PEST} />
+                <Bar dataKey={KEY_SEED} fill={COLOR_MAP.seeds} name={KEY_SEED} />
+                <Bar dataKey={KEY_TOTAL} fill="#0ea5e9" name={KEY_TOTAL} />
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
         <div className="card">
           <h3>{L("Resource Category Distribution", "ප්‍රවර්ග වාරි බෙදාහැරීම")}</h3>
-          <div style={{ height: 280 }}>
-            <ResponsiveContainer width="100%" height="100%">
+          <div style={{ height: 420, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <ResponsiveContainer width="100%" height="70%">
               <PieChart>
                 <Pie
                   data={distribution}
