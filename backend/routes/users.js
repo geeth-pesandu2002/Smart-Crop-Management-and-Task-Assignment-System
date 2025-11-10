@@ -240,4 +240,17 @@ router.delete('/:id', auth(['manager']), async (req, res) => {
   }
 });
 
+/* ---------- get current user's profile ---------- */
+router.get('/me', auth(), async (req, res) => {
+  try {
+    const u = await User.findById(req.user._id)
+      .select('_id userId name email role phone status gender joinedAt address avatarUrl mustChangePassword');
+    if (!u) return res.status(404).json({ error: 'user not found' });
+    res.json(u);
+  } catch (e) {
+    console.error('get profile failed', e);
+    res.status(500).json({ error: 'failed to get profile' });
+  }
+});
+
 module.exports = router;

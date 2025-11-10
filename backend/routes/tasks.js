@@ -131,7 +131,7 @@ router.get('/', auth(['manager']), async (req, res) => {
 
   const [items, total] = await Promise.all([
     Task.find(q)
-      .populate('assignedTo', 'name email')
+  .populate('assignedTo', 'name email gender address joinedAt phone')
       .populate('groupId', 'name')
       .populate('plotId', 'fieldName')
       .sort(sortSpec)
@@ -230,7 +230,7 @@ router.get('/board', auth(['manager']), async (req, res) => {
   if (plot)     q.plotId  = plot;
 
   const all = await Task.find(q)
-    .populate('assignedTo', 'name')
+  .populate('assignedTo', 'name gender address joinedAt phone')
     .populate('groupId', 'name')
     .populate('plotId', 'fieldName')
     .sort('-createdAt');
