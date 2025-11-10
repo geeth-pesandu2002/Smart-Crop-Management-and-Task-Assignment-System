@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import dayjs from "dayjs";
 import {
-  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
 } from "recharts";
 import api, { getResourceMetrics, listResourceUsages } from "../api.js";
@@ -22,9 +22,9 @@ function getDashboardPath() {
 const DASHBOARD_PATH = getDashboardPath();
 
 const COLORS = {
-  fertilizer: "#ff7a00", // orange
-  seeds: "#8B5E3C",      // brown
-  pesticide: "#FFD166",  // yellow
+  fertilizer: "#f97316", // orange
+  seeds: "#8b5e34",      // brown
+  pesticide: "#f59e0b",  // yellow/amber
 };
 
 const money = (n) => `Rs. ${Number(n || 0).toLocaleString()}`;
@@ -91,16 +91,20 @@ export default function Reports() {
 
   useEffect(() => { refresh(); }, [monthStr, category]); // load on filters
 
+  const KEY_FERT = L("Fertilizer", "වරගෙය");
+  const KEY_SEED = L("Seeds", "බීජ");
+  const KEY_PEST = L("Pesticide", "කෘමිනාශක");
+  const KEY_TOTAL = L("Total", "එකතුව");
   const monthlyChart = useMemo(() => {
     if (!metrics) return [];
     return metrics.monthly.map((m) => ({
       month: dayjs(`${metrics.year}-${m.month}-01`).format("MMM"),
-      fertilizer: m.fertilizer,
-      seeds: m.seeds,
-      pesticide: m.pesticide,
-      total: m.total,
+      [KEY_FERT]: m.fertilizer,
+      [KEY_SEED]: m.seeds,
+      [KEY_PEST]: m.pesticide,
+      [KEY_TOTAL]: m.total,
     }));
-  }, [metrics]);
+  }, [metrics, KEY_FERT, KEY_SEED, KEY_PEST, KEY_TOTAL]);
 
   const distribution = useMemo(() => {
     if (!metrics) return [];
@@ -220,34 +224,31 @@ export default function Reports() {
         <button className="btn green" onClick={downloadPDF}>{L("Download PDF", "PDF බාගත කරන්න")}</button>
       </div>
 
-      <div className="muted" style={{ marginTop: -4 }}>
-        {L("Period", "කාලය")}: {from.format("DD/MM/YYYY")} → {to.format("DD/MM/YYYY")} · {L("Category", "ප්‍රවර්ගය")}: {category.toUpperCase()}
-      </div>
 
       {/* CHARTS */}
       <section style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16 }}>
         <div className="card">
           <h3>{L("Monthly Resource Cost (YTD)", "මාසික වියදම් (මෙවැනි වර්ෂය)")}</h3>
-          <div style={{ height: 280 }}>
+          <div style={{ height: 420 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={monthlyChart}>
+              <BarChart data={monthlyChart}>
                 <XAxis dataKey="month" />
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="fertilizer" stroke={COLORS.fertilizer} strokeWidth={2} />
-                <Line type="monotone" dataKey="seeds" stroke={COLORS.seeds} strokeWidth={2} />
-                <Line type="monotone" dataKey="pesticide" stroke={COLORS.pesticide} strokeWidth={2} />
-                <Line type="monotone" dataKey="total" strokeWidth={2} />
-              </LineChart>
+                <Bar dataKey={KEY_FERT} fill={COLORS.fertilizer} name={KEY_FERT} />
+                <Bar dataKey={KEY_PEST} fill={COLORS.pesticide} name={KEY_PEST} />
+                <Bar dataKey={KEY_SEED} fill={COLORS.seeds} name={KEY_SEED} />
+                <Bar dataKey={KEY_TOTAL} fill="#0ea5e9" name={KEY_TOTAL} />
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         <div className="card">
           <h3>{L("Resource Category Distribution", "ප්‍රවර්ග වාරි බෙදාහැරීම")}</h3>
-          <div style={{ height: 280 }}>
-            <ResponsiveContainer width="100%" height="100%">
+          <div style={{ height: 420, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <ResponsiveContainer width="100%" height="70%">
               <PieChart>
                 <Pie data={distribution} dataKey="value" nameKey="name" innerRadius={60} outerRadius={100} label>
                   {distribution.map((d, i) => (
