@@ -113,15 +113,16 @@ export default function Tasks() {
     })();
   }, [t]);
 
-  // Filter staff based on leave for selected startDate
+  // Filter staff based on leave for selected task date range (startDate to dueDate)
   useEffect(() => {
     async function fetchAvailableStaff() {
-      if (!form.startDate) {
+      if (!form.startDate || !form.dueDate) {
         setAvailableStaff(staff);
         return;
       }
       try {
-        const res = await api.get(`/leaves/active?date=${form.startDate}`);
+        // Fetch leaves overlapping the selected date range
+        const res = await api.get(`/leaves?from=${form.startDate}&to=${form.dueDate}`);
         const leaveIds = (res.data || []).map(l => l.user?._id || l.user);
         setAvailableStaff(staff.filter(s => !leaveIds.includes(s._id)));
       } catch {
@@ -129,7 +130,7 @@ export default function Tasks() {
       }
     }
     fetchAvailableStaff();
-  }, [form.startDate, staff]);
+  }, [form.startDate, form.dueDate, staff]);
 
   // --- build query params for tasks list ---
   const buildQuery = useCallback(() => {
@@ -346,6 +347,7 @@ export default function Tasks() {
           <p className="sub">{t("tasks.form.hint")}</p>
 
           <form onSubmit={submit} style={{ display: "grid", gap: 12, marginBottom: 0 }}>
+            {/* Title */}
             <div className="field" style={{ marginBottom: 16 }}>
               <label>{t("tasks.form.title")}</label>
               <input
@@ -356,6 +358,24 @@ export default function Tasks() {
                 onChange={(ev) => setForm({ ...form, title: ev.target.value })}
               />
             </div>
+            {/* Plot */}
+            <div className="field" style={{ marginBottom: 16 }}>
+              <label>{t("tasks.form.plot")}</label>
+              <select
+                className="select"
+                style={{ width: '100%', boxSizing: 'border-box' }}
+                value={form.plotId}
+                onChange={(ev) => setForm({ ...form, plotId: ev.target.value })}
+              >
+                <option value="">{t("tasks.form.selectPlot")}</option>
+                {plots.map((p) => (
+                  <option key={p._id} value={p._id}>
+                    {p.fieldName}{p.cropType ? ` (${p.cropType})` : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {/* Priority */}
             <div className="field" style={{ marginBottom: 16 }}>
               <label>{t("tasks.form.priority")}</label>
               <select
@@ -369,8 +389,8 @@ export default function Tasks() {
                 <option value="high">{t("tasks.form.high")}</option>
               </select>
             </div>
-
-            <div className="field">
+            {/* Description */}
+            <div className="field" style={{ marginBottom: 16 }}>
               <label>{t("tasks.form.desc")}</label>
               <textarea
                 className="input"
@@ -381,7 +401,29 @@ export default function Tasks() {
                 onChange={(ev) => setForm({ ...form, description: ev.target.value })}
               />
             </div>
-
+            {/* Start Date */}
+            <div className="field" style={{ marginBottom: 16 }}>
+              <label>Start Date</label>
+              <input
+                className="input"
+                type="date"
+                style={{ width: '100%', boxSizing: 'border-box' }}
+                value={form.startDate}
+                onChange={(ev) => setForm({ ...form, startDate: ev.target.value })}
+              />
+            </div>
+            {/* Due Date */}
+            <div className="field" style={{ marginBottom: 16 }}>
+              <label>{t("tasks.form.due")}</label>
+              <input
+                className="input"
+                type="date"
+                style={{ width: '100%', boxSizing: 'border-box' }}
+                value={form.dueDate}
+                onChange={(ev) => setForm({ ...form, dueDate: ev.target.value })}
+              />
+            </div>
+            {/* Assigned to staff or group */}
             {mode === "individual" ? (
               <div className="field" style={{ marginBottom: 16 }}>
                 <label>{t("tasks.form.assignStaff")}</label>
@@ -423,55 +465,19 @@ export default function Tasks() {
                 </label>
               </>
             )}
-
-              <div className="field" style={{ marginBottom: 16 }}>
-                <label>{t("tasks.form.plot")}</label>
-                <select
-                  className="select"
-                  style={{ width: '100%', boxSizing: 'border-box' }}
-                  value={form.plotId}
-                  onChange={(ev) => setForm({ ...form, plotId: ev.target.value })}
-                >
-                  <option value="">{t("tasks.form.selectPlot")}</option>
-                  {plots.map((p) => (
-                    <option key={p._id} value={p._id}>
-                      {p.fieldName}{p.cropType ? ` (${p.cropType})` : ""}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="field" style={{ marginBottom: 16 }}>
-                <label>{t("tasks.form.due")}</label>
+            {/* Voice note */}
+            <div className="field" style={{ marginBottom: 16 }}>
+              <label>{t("tasks.form.voice")}</label>
+              <div className="btnbar" style={{ gap: 8 }}>
                 <input
                   className="input"
-                  type="date"
-                  style={{ width: '100%', boxSizing: 'border-box' }}
-                  value={form.dueDate}
-                  onChange={(ev) => setForm({ ...form, dueDate: ev.target.value })}
+                  type="file"
+                  accept="audio/*"
+                  onChange={(ev) => setVoiceFile(ev.target.files?.[0] || null)}
                 />
+                {form.voiceUrl && <span className="badge">{t("tasks.form.attached")}</span>}
               </div>
-              <div className="field" style={{ marginBottom: 16 }}>
-                <label>Start Date</label>
-                <input
-                  className="input"
-                  type="date"
-                  style={{ width: '100%', boxSizing: 'border-box' }}
-                  value={form.startDate}
-                  onChange={(ev) => setForm({ ...form, startDate: ev.target.value })}
-                />
-              </div>
-              <div className="field" style={{ marginBottom: 16 }}>
-                <label>{t("tasks.form.voice")}</label>
-                <div className="btnbar" style={{ gap: 8 }}>
-                  <input
-                    className="input"
-                    type="file"
-                    accept="audio/*"
-                    onChange={(ev) => setVoiceFile(ev.target.files?.[0] || null)}
-                  />
-                  {form.voiceUrl && <span className="badge">{t("tasks.form.attached")}</span>}
-                </div>
-              </div>
+            </div>
 
             <div className="btnbar">
               <button className="btn primary" type="submit" disabled={!canSubmit}>
