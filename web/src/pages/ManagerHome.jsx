@@ -35,21 +35,7 @@ export default function ManagerHome() {
         </div>
       </header>
 
-      <h3 style={{marginTop:24}}>Assign Task</h3>
-      <form onSubmit={createTask} style={{maxWidth:520, display:'grid', gap:10}}>
-        <input placeholder="Title" value={form.title} onChange={e=>setForm({...form, title:e.target.value})}/>
-        <textarea placeholder="Description" value={form.description} onChange={e=>setForm({...form, description:e.target.value})}/>
-        <input placeholder="AssignedTo (staff user id)" value={form.assignedTo} onChange={e=>setForm({...form, assignedTo:e.target.value})}/>
-        <select value={form.priority} onChange={e=>setForm({...form, priority:e.target.value})}>
-          <option value="low">low</option>
-          <option value="normal">normal</option>
-          <option value="high">high</option>
-        </select>
-  <input type="date" value={form.dueDate} onChange={e=>setForm({...form, dueDate:e.target.value})}/>
-  <input type="date" value={form.startDate} onChange={e=>setForm({...form, startDate:e.target.value})} placeholder="Start Date" />
-        <button type="submit">Create Task</button>
-      </form>
-      {msg && <p style={{marginTop:10}}>{msg}</p>}
+      {/* Removed assigned tasks section. Only task creation form remains if needed. */}
     </div>
   );
 }
