@@ -29,6 +29,9 @@ const taskSchema = new mongoose.Schema({
   // attachments
   voiceUrl: { type: String, default: '' },
 
+  // progress percentage (0-100)
+  progress: { type: Number, min: 0, max: 100, default: 0 },
+
   // comments / notes
   notes:    [noteSchema]
 }, { timestamps: true });

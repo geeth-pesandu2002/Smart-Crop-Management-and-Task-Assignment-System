@@ -65,6 +65,9 @@ export default function TaskDetails({ route }: Props) {
   const [loading, setLoading] = useState(true);
   // track which status (if any) is currently being saved so only that button shows loading
   const [savingStatus, setSavingStatus] = useState<string | null>(null);
+  // percentage progress state
+  const [progress, setProgress] = useState<string>('');
+  const [savingProgress, setSavingProgress] = useState(false);
 
   const prettyId = useMemo(() => shortCode(id), [id]);
 
@@ -75,7 +78,13 @@ export default function TaskDetails({ route }: Props) {
       try {
         setLoading(true);
         const data = await api.get(`/tasks/mobile/${id}`);
-        if (mounted) setTask(data as DetailDTO);
+        if (mounted) {
+          setTask(data as DetailDTO);
+          // If backend returns progress, set it here
+          if (data && typeof data.progress === 'number') {
+            setProgress(String(data.progress));
+          }
+        }
       } catch (e: any) {
         if (mounted) Alert.alert('දෝෂය', e?.message || 'කාර්යය ලබා ගැනීමට නොහැකි විය');
       } finally {
@@ -84,6 +93,24 @@ export default function TaskDetails({ route }: Props) {
     })();
     return () => { mounted = false; };
   }, [id]);
+  // Save progress handler
+  async function saveProgress() {
+    if (!task || savingProgress) return;
+    const percent = parseInt(progress, 10);
+    if (isNaN(percent) || percent < 0 || percent > 100) {
+      Alert.alert('දෝෂය', 'කරුණාකර 0-100 අතර ප්‍රතිශතයක් ඇතුළත් කරන්න');
+      return;
+    }
+    setSavingProgress(true);
+    try {
+      await api.patch(`/tasks/${id}/progress`, { progress: percent });
+      Alert.alert('සාර්ථකයි', 'ප්‍රගතිය යාවත්කාලීන විය');
+    } catch (e: any) {
+      Alert.alert('දෝෂය', e?.message || 'ප්‍රගතිය යාවත්කාලීන කිරීමට නොහැකි විය');
+    } finally {
+      setSavingProgress(false);
+    }
+  }
 
   async function changeStatus(next: 'pending'|'in_progress'|'blocked'|'done') {
     if (!task || savingStatus) return; // already saving one
@@ -120,6 +147,35 @@ export default function TaskDetails({ route }: Props) {
         <Row label={S.priority} value={prioritySi(task.priority)} />
         <Row label={S.plot} value={task.plotCode || S.unknown} />
         <Row label={S.due} value={fmtDate(task.dueDate)} />
+      </View>
+
+      {/* Progress input section */}
+      <View style={{ marginTop: 18, marginBottom: 8, backgroundColor: '#f3f4f6', borderRadius: 10, padding: 12 }}>
+        <Text style={{ fontSize: 15, fontWeight: '600', marginBottom: 6 }}>ප්‍රගති ප්‍රතිශතය (%)</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Input
+            value={progress}
+            onChangeText={setProgress}
+            keyboardType="numeric"
+            maxLength={3}
+            style={{ flex: 1, fontSize: 16, backgroundColor: 'white', borderRadius: 8, padding: 8, borderWidth: 1, borderColor: '#d1d5db' }}
+            placeholder="0-100"
+          />
+          <Pressable
+            onPress={saveProgress}
+            style={({ pressed }) => ({
+              backgroundColor: '#16a34a', // match other buttons
+              paddingVertical: 10,
+              paddingHorizontal: 16,
+              borderRadius: 8,
+              opacity: savingProgress ? 0.7 : pressed ? 0.85 : 1,
+            })}
+            disabled={savingProgress}
+          >
+            {savingProgress ? <ActivityIndicator color="white" style={{ marginRight: 6 }} /> : null}
+            <Text style={{ color: 'white', fontWeight: '700' }}>යාවත්කාලීන කරන්න</Text>
+          </Pressable>
+        </View>
       </View>
 
       {/* current status */}
@@ -167,6 +223,7 @@ function Row({ label, value }: { label: string; value: string }) {
     </View>
   );
 }
+
 function StatusBtn({ text, onPress, loading, active }: { text: string; onPress: () => void; loading?: boolean; active?: boolean }) {
   const scale = useRef(new Animated.Value(active ? 1.03 : 1)).current;
 
@@ -202,5 +259,11 @@ function StatusBtn({ text, onPress, loading, active }: { text: string; onPress: 
       </Pressable>
     </Animated.View>
   );
+}
+
+// Simple Input component using RN TextInput
+import { TextInput } from 'react-native';
+function Input(props: any) {
+  return <TextInput {...props} />;
 }
 

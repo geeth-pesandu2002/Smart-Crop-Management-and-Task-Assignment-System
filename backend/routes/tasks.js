@@ -59,6 +59,24 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
+// Update progress (assignee or group member ONLY)
+router.patch('/:id/progress', auth(), async (req, res) => {
+  const { progress } = req.body || {};
+  const percent = Number(progress);
+  if (isNaN(percent) || percent < 0 || percent > 100) {
+    return res.status(400).json({ error: 'bad progress value' });
+  }
+  const t = await Task.findById(req.params.id);
+  if (!t) return res.status(404).json({ error: 'not found' });
+  const allowedStaff = await isAssigneeOrGroupMember(t, req.user._id);
+  if (!allowedStaff && req.user.role !== 'manager') {
+    return res.status(403).json({ error: 'forbidden' });
+  }
+  t.progress = percent;
+  await t.save();
+  res.json({ ok: true, progress: t.progress });
+});
+
 router.post('/voice', auth(['manager']), upload.single('voice'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'no file' });
   const host = req.get('host');
@@ -336,6 +354,7 @@ router.get('/mobile/:id', auth(), async (req, res) => {
       dueDate: r.dueDate ? Number(new Date(r.dueDate).getTime()) : null,
       plotCode: toSiPlotLabel(fieldName),
       updatedAt: Number(new Date(r.updatedAt).getTime()),
+      progress: typeof r.progress === 'number' ? r.progress : 0,
     });
   } catch (e) {
     console.error('mobile detail error:', e);

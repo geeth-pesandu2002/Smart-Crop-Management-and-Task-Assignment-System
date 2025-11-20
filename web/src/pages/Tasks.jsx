@@ -341,167 +341,166 @@ export default function Tasks() {
       </div>
 
       <div className="panel">
-  {/* LEFT: Create/Assign form */}
-  <div className="card create-task">
-          <h3>{t("tasks.form.create")}</h3>
-          <p className="sub">{t("tasks.form.hint")}</p>
-
-          <form onSubmit={submit} style={{ display: "grid", gap: 12, marginBottom: 0 }}>
-            {/* Title */}
-            <div className="field" style={{ marginBottom: 16 }}>
-              <label>{t("tasks.form.title")}</label>
-              <input
-                className="input"
-                style={{ width: '100%', boxSizing: 'border-box' }}
-                placeholder={t("tasks.form.titlePh")}
-                value={form.title}
-                onChange={(ev) => setForm({ ...form, title: ev.target.value })}
-              />
-            </div>
-            {/* Plot */}
-            <div className="field" style={{ marginBottom: 16 }}>
-              <label>{t("tasks.form.plot")}</label>
-              <select
-                className="select"
-                style={{ width: '100%', boxSizing: 'border-box' }}
-                value={form.plotId}
-                onChange={(ev) => setForm({ ...form, plotId: ev.target.value })}
-              >
-                <option value="">{t("tasks.form.selectPlot")}</option>
-                {plots.map((p) => (
-                  <option key={p._id} value={p._id}>
-                    {p.fieldName}{p.cropType ? ` (${p.cropType})` : ""}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {/* Priority */}
-            <div className="field" style={{ marginBottom: 16 }}>
-              <label>{t("tasks.form.priority")}</label>
-              <select
-                className="select"
-                style={{ width: '100%', boxSizing: 'border-box' }}
-                value={form.priority}
-                onChange={(ev) => setForm({ ...form, priority: ev.target.value })}
-              >
-                <option value="low">{t("tasks.form.low")}</option>
-                <option value="normal">{t("tasks.form.normal")}</option>
-                <option value="high">{t("tasks.form.high")}</option>
-              </select>
-            </div>
-            {/* Description */}
-            <div className="field" style={{ marginBottom: 16 }}>
-              <label>{t("tasks.form.desc")}</label>
-              <textarea
-                className="input"
-                rows={3}
-                style={{ width: '100%', boxSizing: 'border-box', resize: 'vertical', marginBottom: 16 }}
-                placeholder={t("tasks.form.descPh")}
-                value={form.description}
-                onChange={(ev) => setForm({ ...form, description: ev.target.value })}
-              />
-            </div>
-            {/* Start Date */}
-            <div className="field" style={{ marginBottom: 16 }}>
-              <label>Start Date</label>
-              <input
-                className="input"
-                type="date"
-                style={{ width: '100%', boxSizing: 'border-box' }}
-                value={form.startDate}
-                onChange={(ev) => setForm({ ...form, startDate: ev.target.value })}
-              />
-            </div>
-            {/* Due Date */}
-            <div className="field" style={{ marginBottom: 16 }}>
-              <label>{t("tasks.form.due")}</label>
-              <input
-                className="input"
-                type="date"
-                style={{ width: '100%', boxSizing: 'border-box' }}
-                value={form.dueDate}
-                onChange={(ev) => setForm({ ...form, dueDate: ev.target.value })}
-              />
-            </div>
-            {/* Assigned to staff or group */}
-            {mode === "individual" ? (
+        {/* LEFT: Create/Assign form - limit white background to just the form */}
+        <div style={{ padding: 0, background: "none", boxShadow: "none", border: "none" }}>
+          <div className="card create-task" style={{ maxWidth: 480, margin: 0 }}>
+            <h3>{t("tasks.form.create")}</h3>
+            <p className="sub">{t("tasks.form.hint")}</p>
+            <form onSubmit={submit} style={{ display: "grid", gap: 12, marginBottom: 0 }}>
+              {/* Title */}
               <div className="field" style={{ marginBottom: 16 }}>
-                <label>{t("tasks.form.assignStaff")}</label>
+                <label>{t("tasks.form.title")}</label>
+                <input
+                  className="input"
+                  style={{ width: '100%', boxSizing: 'border-box' }}
+                  placeholder={t("tasks.form.titlePh")}
+                  value={form.title}
+                  onChange={(ev) => setForm({ ...form, title: ev.target.value })}
+                />
+              </div>
+              {/* Plot */}
+              <div className="field" style={{ marginBottom: 16 }}>
+                <label>{t("tasks.form.plot")}</label>
                 <select
                   className="select"
-                  value={form.assignedTo}
-                  onChange={(ev) => setForm({ ...form, assignedTo: ev.target.value })}
+                  style={{ width: '100%', boxSizing: 'border-box' }}
+                  value={form.plotId}
+                  onChange={(ev) => setForm({ ...form, plotId: ev.target.value })}
                 >
-                  <option value="">{t("tasks.form.selectStaff")}</option>
-                  {availableStaff.map((s) => (
-                    <option key={s._id} value={s._id}>
-                      {s.name}{s.email ? ` (${s.email})` : ""}
+                  <option value="">{t("tasks.form.selectPlot")}</option>
+                  {plots.map((p) => (
+                    <option key={p._id} value={p._id}>
+                      {p.fieldName}{p.cropType ? ` (${p.cropType})` : ""}
                     </option>
                   ))}
                 </select>
               </div>
-            ) : (
-              <>
-                <div className="field">
-                  <label>{t("tasks.form.assignGroup")}</label>
+              {/* Priority */}
+              <div className="field" style={{ marginBottom: 16 }}>
+                <label>{t("tasks.form.priority")}</label>
+                <select
+                  className="select"
+                  style={{ width: '100%', boxSizing: 'border-box' }}
+                  value={form.priority}
+                  onChange={(ev) => setForm({ ...form, priority: ev.target.value })}
+                >
+                  <option value="low">{t("tasks.form.low")}</option>
+                  <option value="normal">{t("tasks.form.normal")}</option>
+                  <option value="high">{t("tasks.form.high")}</option>
+                </select>
+              </div>
+              {/* Description */}
+              <div className="field" style={{ marginBottom: 16 }}>
+                <label>{t("tasks.form.desc")}</label>
+                <textarea
+                  className="input"
+                  rows={3}
+                  style={{ width: '100%', boxSizing: 'border-box', resize: 'vertical', marginBottom: 16 }}
+                  placeholder={t("tasks.form.descPh")}
+                  value={form.description}
+                  onChange={(ev) => setForm({ ...form, description: ev.target.value })}
+                />
+              </div>
+              {/* Start Date */}
+              <div className="field" style={{ marginBottom: 16 }}>
+                <label>Start Date</label>
+                <input
+                  className="input"
+                  type="date"
+                  style={{ width: '100%', boxSizing: 'border-box' }}
+                  value={form.startDate}
+                  onChange={(ev) => setForm({ ...form, startDate: ev.target.value })}
+                />
+              </div>
+              {/* Due Date */}
+              <div className="field" style={{ marginBottom: 16 }}>
+                <label>{t("tasks.form.due")}</label>
+                <input
+                  className="input"
+                  type="date"
+                  style={{ width: '100%', boxSizing: 'border-box' }}
+                  value={form.dueDate}
+                  onChange={(ev) => setForm({ ...form, dueDate: ev.target.value })}
+                />
+              </div>
+              {/* Assigned to staff or group */}
+              {mode === "individual" ? (
+                <div className="field" style={{ marginBottom: 16 }}>
+                  <label>{t("tasks.form.assignStaff")}</label>
                   <select
                     className="select"
-                    value={form.groupId}
-                    onChange={(ev) => setForm({ ...form, groupId: ev.target.value })}
+                    value={form.assignedTo}
+                    onChange={(ev) => setForm({ ...form, assignedTo: ev.target.value })}
                   >
-                    <option value="">{t("tasks.form.selectGroup")}</option>
-                    {groups.map((g) => (
-                      <option key={g._id} value={g._id}>{g.name}</option>
+                    <option value="">{t("tasks.form.selectStaff")}</option>
+                    {availableStaff.map((s) => (
+                      <option key={s._id} value={s._id}>
+                        {s.name}{s.email ? ` (${s.email})` : ""}
+                      </option>
                     ))}
                   </select>
                 </div>
-                <label className="small" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              ) : (
+                <>
+                  <div className="field">
+                    <label>{t("tasks.form.assignGroup")}</label>
+                    <select
+                      className="select"
+                      value={form.groupId}
+                      onChange={(ev) => setForm({ ...form, groupId: ev.target.value })}
+                    >
+                      <option value="">{t("tasks.form.selectGroup")}</option>
+                      {groups.map((g) => (
+                        <option key={g._id} value={g._id}>{g.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <label className="small" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <input
+                      type="checkbox"
+                      checked={form.sharedGroupTask}
+                      onChange={(ev) => setForm({ ...form, sharedGroupTask: ev.target.checked })}
+                    />
+                    <span>{t("tasks.form.shared")}</span>
+                  </label>
+                </>
+              )}
+              {/* Voice note */}
+              <div className="field" style={{ marginBottom: 16 }}>
+                <label>{t("tasks.form.voice")}</label>
+                <div className="btnbar" style={{ gap: 8 }}>
                   <input
-                    type="checkbox"
-                    checked={form.sharedGroupTask}
-                    onChange={(ev) => setForm({ ...form, sharedGroupTask: ev.target.checked })}
+                    className="input"
+                    type="file"
+                    accept="audio/*"
+                    onChange={(ev) => setVoiceFile(ev.target.files?.[0] || null)}
                   />
-                  <span>{t("tasks.form.shared")}</span>
-                </label>
-              </>
-            )}
-            {/* Voice note */}
-            <div className="field" style={{ marginBottom: 16 }}>
-              <label>{t("tasks.form.voice")}</label>
-              <div className="btnbar" style={{ gap: 8 }}>
-                <input
-                  className="input"
-                  type="file"
-                  accept="audio/*"
-                  onChange={(ev) => setVoiceFile(ev.target.files?.[0] || null)}
-                />
-                {form.voiceUrl && <span className="badge">{t("tasks.form.attached")}</span>}
+                  {form.voiceUrl && <span className="badge">{t("tasks.form.attached")}</span>}
+                </div>
               </div>
-            </div>
-
-            <div className="btnbar">
-              <button className="btn primary" type="submit" disabled={!canSubmit}>
-                {t("tasks.form.submit")}
-              </button>
-              <button
-                type="button"
-                className="btn ghost"
-                onClick={() => {
-                  setForm({
-                    title: "", description: "", assignedTo: "", groupId: "",
-                    priority: "normal", dueDate: "", plotId: "",
-                    sharedGroupTask: true, voiceUrl: ""
-                  });
-                  setVoiceFile(null);
-                  setMsg("");
-                }}
-                title={t("tasks.form.clear") || "Clear"}
-              >
-                {t("tasks.form.clear") || "Clear"}
-              </button>
-            </div>
-          </form>
-          {/* Remove extra space below buttons by not rendering anything after the form */}
+              <div className="btnbar">
+                <button className="btn primary" type="submit" disabled={!canSubmit}>
+                  {t("tasks.form.submit")}
+                </button>
+                <button
+                  type="button"
+                  className="btn ghost"
+                  onClick={() => {
+                    setForm({
+                      title: "", description: "", assignedTo: "", groupId: "",
+                      priority: "normal", dueDate: "", plotId: "",
+                      sharedGroupTask: true, voiceUrl: ""
+                    });
+                    setVoiceFile(null);
+                    setMsg("");
+                  }}
+                  title={t("tasks.form.clear") || "Clear"}
+                >
+                  {t("tasks.form.clear") || "Clear"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
 
         {/* RIGHT: Filters + Recent table */}
@@ -562,6 +561,7 @@ export default function Tasks() {
                 <th>{t("tasks.table.head.plot")}</th>
                 <th>{t("tasks.table.head.priority")}</th>
                 <th>{t("tasks.table.head.status")}</th>
+                <th>Progress (%)</th>
                 <th>Start Date</th>
                 <th>{t("tasks.table.head.due")}</th>
                 <th style={{width:120}}>{t("tasks.comments.col") || "Comments"}</th>
@@ -595,6 +595,7 @@ export default function Tasks() {
                         <StatusBadge status={tk.status} />
                       )}
                     </td>
+                    <td>{typeof tk.progress === 'number' ? tk.progress : 0}</td>
                     <td>{tk.startDate ? new Date(tk.startDate).toLocaleDateString() : "-"}</td>
                     <td>{tk.dueDate ? new Date(tk.dueDate).toLocaleDateString() : "-"}</td>
                     <td>
