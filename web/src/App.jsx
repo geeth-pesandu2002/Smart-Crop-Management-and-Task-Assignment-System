@@ -14,6 +14,7 @@ import Reports from "./pages/Reports.jsx";
 import FieldReports from "./pages/FieldReports.jsx";
 import Settings from "./pages/Settings.jsx";
 import Status from "./pages/Status.jsx";
+import Groups from "./pages/Groups.jsx";
 
 // Auth helpers
 import { isAuthed, isManager, ensureMe } from "./auth.js";
@@ -88,7 +89,9 @@ export default function App() {
           <Route path="/reports"     element={<Protected><Reports /></Protected>} />
           <Route path="/reports/field" element={<Protected><FieldReports /></Protected>} />
           <Route path="/settings"    element={<Protected><Settings /></Protected>} />
+
           <Route path="/status"      element={<Protected><Status /></Protected>} />
+          <Route path="/groups"      element={<Protected><Groups /></Protected>} />
 
           {/* Catch-all */}
           <Route path="*" element={<Navigate to="/" replace />} />

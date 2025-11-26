@@ -173,7 +173,30 @@ export default function Dashboard() {
           <div style={{ flex: 1, overflow: 'auto', padding: '0 24px 24px 24px' }}>
             {/* KPI row */}
             <section className="kpi-row" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
-              <KpiCard title="Crop Status" big="95% Healthy" sub="Overall health of active crops" action="View Details" to="/status" />
+              <KpiCard
+                title="Crop Status"
+                big={(() => {
+                  // Calculate overall health as in Status.jsx
+                  const plotsWithHealth = plots.filter(plot => Array.isArray(plot.harvests) && plot.harvests.some(h => h.harvestedQty > 0));
+                  const healthValues = plotsWithHealth.map(plot => {
+                    let totalHarvested = 0;
+                    let totalDiscarded = 0;
+                    for (const cycle of plot.harvests || []) {
+                      totalHarvested += Number(cycle.harvestedQty || 0);
+                      totalDiscarded += Number(cycle.discardedQty || 0);
+                    }
+                    if (totalHarvested === 0) return null;
+                    return ((totalHarvested - totalDiscarded) / totalHarvested) * 100;
+                  }).filter(v => v !== null && !isNaN(v));
+                  const overallHealth = healthValues.length > 0
+                    ? (healthValues.reduce((sum, v) => sum + v, 0) / healthValues.length).toFixed(2)
+                    : null;
+                  return overallHealth !== null ? `${overallHealth}% Healthy` : 'N/A';
+                })()}
+                sub="Overall health of active crops"
+                action="View Details"
+                to="/status"
+              />
               <KpiCard title="Soil Condition Alerts" big={`${alerts.length} Active Alerts`} sub="Immediate issues from sensors" action="View Details" />
               <KpiCard
                 title="Task Summary"

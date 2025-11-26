@@ -15,13 +15,19 @@ const ALLOW_MANAGER_STATUS_OVERRIDE =
 const toServerStatus = (s) => (s === 'done' ? 'completed' : s);
 const toMobileStatus = (s) => (s === 'completed' ? 'done' : s);
 
-/** Visibility: direct assignee OR any shared group task */
-const visibilityForUser = (user) => ({
-  $or: [
-    { assignedTo: user?._id },
-    { groupId: { $exists: true, $ne: null } },
-  ],
-});
+/** Visibility: direct assignee OR group member (only their groups) */
+const visibilityForUser = async (user) => {
+  const userId = user?._id;
+  // Find groups where user is a member
+  const groups = await Group.find({ members: userId }).select('_id').lean();
+  const groupIds = groups.map(g => g._id);
+  return {
+    $or: [
+      { assignedTo: userId },
+      { groupId: { $in: groupIds } },
+    ],
+  };
+};
 
 /** Sinhala-friendly plot label (e.g., "Plot D" -> "D") */
 function toSiPlotLabel(fieldName) {
@@ -171,7 +177,8 @@ router.get('/', auth(['manager']), async (req, res) => {
 router.get('/mine', auth(), async (req, res) => {
   const since = Number(req.query.since || 0);
   const updatedSince = since ? { updatedAt: { $gte: new Date(since) } } : {};
-  const q = { $and: [visibilityForUser(req.user), updatedSince] };
+  const visibility = await visibilityForUser(req.user);
+  const q = { $and: [visibility, updatedSince] };
   const tasks = await Task.find(q)
     .populate('plotId', 'fieldName')
     .sort('-updatedAt');
@@ -304,7 +311,8 @@ router.get('/mobile-sync/pull', auth(), async (req, res) => {
   try {
     const since = Number(req.query?.since || 0);
     const sinceFilter = since ? { updatedAt: { $gt: new Date(since) } } : {};
-    const q = { $and: [visibilityForUser(req.user), sinceFilter] };
+    const visibility = await visibilityForUser(req.user);
+    const q = { $and: [visibility, sinceFilter] };
 
     const rows = await Task.find(q)
       .populate('plotId', 'fieldName')

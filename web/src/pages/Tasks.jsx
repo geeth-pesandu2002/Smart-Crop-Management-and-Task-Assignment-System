@@ -454,6 +454,14 @@ export default function Tasks() {
                         <option key={g._id} value={g._id}>{g.name}</option>
                       ))}
                     </select>
+                    <button
+                      type="button"
+                      className="btn ghost"
+                      style={{ marginTop: 8 }}
+                      onClick={() => window.location.href = '/groups'}
+                    >
+                      Create Group
+                    </button>
                   </div>
                   <label className="small" style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <input
