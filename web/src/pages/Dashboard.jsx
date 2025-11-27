@@ -94,15 +94,15 @@ export default function Dashboard() {
 
   const { data: taskSum, loading: loadTasks } = useFetch("/tasks/summary", null);
 
+  const [plots, setPlots] = useState([]);
+  const [loadingPlots, setLoadingPlots] = useState(true);
   const alerts = useMemo(() => ([
     { id: 1, title: "Low moisture - P-A3", level: "high" },
     { id: 2, title: "pH drift - P-B2", level: "med" },
     { id: 3, title: "Fertilizer overdue - P-C1", level: "low" },
   ]), []);
-  const finance = { revenue: 150000, delta: +8.2 };
-
-  const [plots, setPlots] = useState([]);
-  const [loadingPlots, setLoadingPlots] = useState(true);
+  // Calculate total earnings from plots in real time
+  const totalEarnings = plots.reduce((sum, p) => sum + (p.totals?.earnings || 0), 0);
 
   useEffect(() => {
     (async () => {
@@ -208,9 +208,9 @@ export default function Dashboard() {
                 to="/tasks"
               />
               <KpiCard
-                title="Financial Snapshot"
-                big={`Rs. ${finance.revenue.toLocaleString()}`}
-                sub={`Revenue (Δ ${finance.delta > 0 ? "+" : ""}${finance.delta}%)`}
+                title="Total Earnings"
+                big={`LKR ${totalEarnings.toLocaleString()}`}
+                sub={"Total earnings from all plots"}
                 action="View Details"
                 to="/plots"
               />

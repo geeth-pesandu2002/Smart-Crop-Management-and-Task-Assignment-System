@@ -111,22 +111,16 @@ const Profit = () => {
 		});
 	}, [selectedPlotId]);
 
-	// Find the latest or matching harvest for the selected date
-	let harvest = null;
+
+	// Sum all harvests for the selected plot
+	let harvestedQty = 0, discardedQty = 0, earnings = 0;
 	if (plotData && plotData.harvests && plotData.harvests.length > 0) {
-		if (selectedDate) {
-			harvest = plotData.harvests.find(h => h.harvestDate && h.harvestDate.slice(0,10) === selectedDate);
-		}
-		if (!harvest) {
-			// fallback: latest
-			harvest = [...plotData.harvests].sort((a, b) => new Date(b.harvestDate) - new Date(a.harvestDate))[0];
+		for (const h of plotData.harvests) {
+			harvestedQty += h.harvestedQty || 0;
+			discardedQty += h.discardedQty || 0;
+			earnings += h.earnings || 0;
 		}
 	}
-
-	// Default values if no data
-	const harvestedQty = harvest?.harvestedQty ?? 0;
-	const discardedQty = harvest?.discardedQty ?? 0;
-	const earnings = harvest?.earnings ?? 0;
 	const profit = earnings - totalCost;
 
 	// Save or update profit record
