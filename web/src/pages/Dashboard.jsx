@@ -150,6 +150,8 @@ export default function Dashboard() {
           <NavLink to="/settings" label="Settings" active={location.pathname.startsWith("/settings")} />
           <NavLink to="/status" label="Status" active={location.pathname.startsWith("/status")} />
 
+          <NavLink to="/profit" label="Profit" active={location.pathname.startsWith("/profit")} />
+
           <div style={{ marginTop: "auto", display: "grid", gap: 8 }}>
             <Link to="/settings" className="btn outline">Help</Link>
             <Link to="/login" className="btn outline" onClick={() => localStorage.clear()}>Logout</Link>

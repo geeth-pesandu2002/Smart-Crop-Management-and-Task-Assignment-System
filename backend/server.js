@@ -37,7 +37,11 @@ const resourcesRouter = require('./routes/resources.js');
 const leavesRouter    = require('./routes/leaves.js');
 const issuesRouter    = require('./routes/issues.js');
 const reportsRouter   = require('./routes/reports.js');
+
+const profitsRouter   = require('./routes/profits.js');
+const pdfRouter       = require('./routes/pdf.js');
 const uploadsRouter   = require('./routes/uploads.js');
+app.use('/api/pdf',      pdfRouter);
 
 // Helper to assert an Express router
 function assertRouter(name, r) {
@@ -70,6 +74,8 @@ app.use('/api/resources', resourcesRouter);
 app.use('/api/leaves',    leavesRouter);
 app.use('/api/issues',    issuesRouter);
 app.use('/api/reports',   reportsRouter);
+
+app.use('/api/profits',   profitsRouter);
 app.use('/api/uploads',   uploadsRouter);
 
 console.log('Booting server...');

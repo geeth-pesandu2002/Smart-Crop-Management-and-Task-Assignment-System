@@ -40,6 +40,14 @@ export default function Reports() {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
   });
   const [category, setCategory] = useState("all");
+  const [plotFilter, setPlotFilter] = useState("");
+  // Map to unify plot names (e.g., 'Plot A field' -> 'Plot A', 'Plot A Field' -> 'Plot A')
+  const normalizePlotName = name => {
+    if (!name) return "";
+    // Special case: treat 'Plot A Field' (any case) as 'Plot A'
+    if (/^plot a field$/i.test(name.trim())) return "Plot A";
+    return name.replace(/ field$/i, "").trim();
+  };
 
   // derived dates
   const from = useMemo(() => dayjs(`${monthStr}-01`).startOf("month"), [monthStr]);
@@ -51,6 +59,7 @@ export default function Reports() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
+  const [plotNames, setPlotNames] = useState([]);
 
   // live refresh channel (from Resources page)
   const bcRef = useRef(null);
@@ -71,17 +80,24 @@ export default function Reports() {
     setLoading(true);
     setErr("");
     try {
+      // Fetch all resource usages, not filtered by month
       const [m, list] = await Promise.all([
         getResourceMetrics(year),
         listResourceUsages({
-          from: from.format("YYYY-MM-DD"),
-          to: to.format("YYYY-MM-DD"),
+          // Remove from/to: fetch all
           type: category !== "all" ? category : undefined,
-          limit: 500,
+          limit: 5000, // get all
         }),
       ]);
       setMetrics(m);
       setRows(list.items || []);
+      // Collect unique normalized plot names for filter dropdown (deduplicate after normalization)
+      const allNames = (list.items || []).map(r => r.plotName || r.fieldName).filter(Boolean);
+      // Normalize all names
+      const normalizedNames = allNames.map(normalizePlotName);
+      // Only keep unique normalized names
+      const names = Array.from(new Set(normalizedNames));
+      setPlotNames(names);
     } catch (e) {
       setErr(e?.response?.data?.error || e?.message || "Failed to load");
     } finally {
@@ -89,7 +105,7 @@ export default function Reports() {
     }
   };
 
-  useEffect(() => { refresh(); }, [monthStr, category]); // load on filters
+  useEffect(() => { refresh(); }, [category]); // load on category change only
 
   const KEY_FERT = L("Fertilizer", "වරගෙය");
   const KEY_SEED = L("Seeds", "බීජ");
@@ -159,6 +175,12 @@ export default function Reports() {
     }
   };
 
+  // Filter rows by selected plot (across all months)
+  const filteredRows = plotFilter
+    ? rows.filter(r => normalizePlotName(r.plotName || r.fieldName) === plotFilter)
+    : rows;
+  const totalCost = filteredRows.reduce((sum, r) => sum + (r.cost || 0), 0);
+
   return (
     <div className="container" style={{ padding: 24, display: "grid", gap: 16 }}>
       {/* PAGE HEADER: title + language + dashboard button (top-right) */}
@@ -197,7 +219,7 @@ export default function Reports() {
       </div>
 
       {/* FILTER BAR */}
-      <div className="card" style={{ display: "grid", gridTemplateColumns: "1fr auto auto auto auto", gap: 12, alignItems: "center" }}>
+      <div className="card" style={{ display: "grid", gridTemplateColumns: "1fr auto auto auto auto auto", gap: 12, alignItems: "center" }}>
         <div style={{ fontWeight: 700, fontSize: 18 }}>{L("Filters", "පෙරහන්")}</div>
 
         <label className="row">
@@ -217,6 +239,16 @@ export default function Reports() {
             <option value="fertilizer">{L("Fertilizer", "වරගෙය")}</option>
             <option value="seeds">{L("Seeds", "බීජ")}</option>
             <option value="pesticide">{L("Pesticides", "කෘමිනාශක")}</option>
+          </select>
+        </label>
+
+        <label className="row">
+          <span className="muted">{L("Plot Name", "කොටසේ නම")}</span>
+          <select className="select" value={plotFilter} onChange={e => setPlotFilter(e.target.value)}>
+            <option value="">{L("All", "සියල්ල")}</option>
+            {plotNames.map(name => (
+              <option key={name} value={name}>{name}</option>
+            ))}
           </select>
         </label>
 
@@ -270,25 +302,28 @@ export default function Reports() {
             <thead>
               <tr>
                 <th>{L("Month", "මාසය")}</th>
+                <th>{L("Plot Name", "කොටසේ නම")}</th>
                 <th>{L("Resource", "සරමු")}</th>
                 <th>{L("Category", "ප්‍රවර්ගය")}</th>
                 <th>{L("Total Qty", "මුළු ප්‍රමාණය")}</th>
                 <th>{L("Unit", "ඒකකය")}</th>
+                <th>{L("Cost", "වියදම")}</th>
               </tr>
             </thead>
             <tbody>
               {loading && (
-                <tr><td colSpan={5}>{L("Loading…", "පූරණය වෙමින්…")}</td></tr>
+                <tr><td colSpan={7}>{L("Loading…", "පූරණය වෙමින්…")}</td></tr>
               )}
               {!loading && err && (
-                <tr><td colSpan={5} style={{ color: "#b91c1c" }}>{err}</td></tr>
+                <tr><td colSpan={7} style={{ color: "#b91c1c" }}>{err}</td></tr>
               )}
-              {!loading && !err && rows.length === 0 && (
-                <tr><td colSpan={5}>{L("No data", "දත්ත නැත")}</td></tr>
+              {!loading && !err && filteredRows.length === 0 && (
+                <tr><td colSpan={7}>{L("No data", "දත්ත නැත")}</td></tr>
               )}
-              {!loading && !err && rows.map((r) => (
+              {!loading && !err && filteredRows.map((r) => (
                 <tr key={r._id}>
                   <td>{dayjs(r.date).format("YYYY-MM")}</td>
+                  <td>{normalizePlotName(r.plotName || r.fieldName) || "—"}</td>
                   <td>
                     {r.type === "fertilizer" && (r.fertilizerName || "—")}
                     {r.type === "seeds" && (r.fieldName || "—")}
@@ -297,11 +332,17 @@ export default function Reports() {
                   <td>{r.type}</td>
                   <td>{r.quantity?.value || 0}</td>
                   <td>{r.quantity?.unit || "—"}</td>
+                  <td>{money(r.cost)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+        {plotFilter && (
+          <div style={{ fontWeight: 700, fontSize: 18, marginTop: 16 }}>
+            {L("Total Cost for", "මුළු වියදම")}: {plotFilter} = {money(totalCost)}
+          </div>
+        )}
       </div>
 
       <style>{`

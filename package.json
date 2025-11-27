@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "json2csv": "^6.0.0-alpha.2"
+    "json2csv": "^6.0.0-alpha.2",
+    "pdfkit": "^0.17.2"
   }
 }

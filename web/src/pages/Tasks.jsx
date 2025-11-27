@@ -456,8 +456,28 @@ export default function Tasks() {
                     </select>
                     <button
                       type="button"
-                      className="btn ghost"
-                      style={{ marginTop: 8 }}
+                      style={{
+                        marginTop: 8,
+                        padding: "8px 20px",
+                        fontWeight: 700,
+                        borderRadius: "999px",
+                        background: "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)",
+                        color: "#fff",
+                        border: "none",
+                        boxShadow: "0 2px 8px rgba(34,197,94,0.10)",
+                        letterSpacing: "0.5px",
+                        fontSize: "15px",
+                        transition: "background 0.2s, box-shadow 0.2s",
+                        cursor: "pointer"
+                      }}
+                      onMouseOver={e => {
+                        e.currentTarget.style.background = "linear-gradient(90deg, #16a34a 0%, #22c55e 100%)";
+                        e.currentTarget.style.boxShadow = "0 4px 16px rgba(34,197,94,0.18)";
+                      }}
+                      onMouseOut={e => {
+                        e.currentTarget.style.background = "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)";
+                        e.currentTarget.style.boxShadow = "0 2px 8px rgba(34,197,94,0.10)";
+                      }}
                       onClick={() => window.location.href = '/groups'}
                     >
                       Create Group
